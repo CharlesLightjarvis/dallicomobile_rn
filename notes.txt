@@ -1,0 +1,383 @@
+Oui. Pour la V1, je te conseille de résister à la tentation de construire Duolingo + Goethe + jeux + IA dès le départ. Le bon noyau est beaucoup plus simple : une bibliothèque d’apprentissage structurée A1 → B2, avec une progression claire, de la grammaire et du vocabulaire réellement exploitables.
+
+Je construirais le produit autour de cette logique :
+
+                    DEUTSCH APP
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+         APPRENDRE                RÉVISER
+             │                       │
+      ┌──────┴──────┐          ┌─────┴─────┐
+      │             │          │           │
+  Grammaire     Vocabulaire  Favoris   À revoir
+      │             │
+      ▼             ▼
+ A1 A2 B1 B2    A1 A2 B1 B2
+      │             │
+      ▼             ▼
+   Chapitres       Thèmes
+      │             │
+      ▼             ▼
+    Leçons         Mots
+      │             │
+      ├─ Explication
+      ├─ Exemples
+      ├─ Règle
+      ├─ Tableau
+      └─ Mini quiz
+1. Le concept de la V1
+
+L'utilisateur ouvre l'application et choisit son niveau :
+
+A1    A2    B1    B2
+
+Puis il entre dans deux univers :
+
+GRAMMAIRE
+VOCABULAIRE
+
+Pas besoin de mettre les examens ou les jeux au centre immédiatement. Par contre, il faut préparer l'architecture pour qu'ils puissent être ajoutés plus tard sans refaire l'application.
+
+Donc le modèle global devrait déjà prévoir :
+
+Learn
+├── Grammar
+├── Vocabulary
+├── Expressions      futur
+├── Pronunciation    futur
+└── Listening        futur
+
+Practice
+├── Quiz
+├── Flashcards
+├── Games            futur
+└── Daily Practice   futur
+
+Exams
+├── Goethe           futur
+├── TELC             futur
+└── ÖSD              futur
+2. Organisation de la grammaire
+
+Ne fais surtout pas une grande liste de règles.
+
+Il faut une véritable arborescence pédagogique.
+
+Par exemple :
+
+A1
+│
+├── 01. Les bases
+│   ├── Alphabet
+│   ├── Prononciation
+│   ├── Phrase affirmative
+│   └── Questions
+│
+├── 02. Les noms
+│   ├── der / die / das
+│   ├── pluriel
+│   └── genres
+│
+├── 03. Les verbes
+│   ├── sein
+│   ├── haben
+│   ├── verbes réguliers
+│   ├── verbes irréguliers
+│   └── verbes séparables
+│
+├── 04. Les cas
+│   ├── nominatif
+│   └── accusatif
+│
+├── 05. Pronoms
+│
+├── 06. Prépositions
+│
+└── 07. Construction des phrases
+
+Puis A2 développe :
+
+A2
+├── Datif
+├── Wechselpräpositionen
+├── Perfekt
+├── Präteritum de sein/haben
+├── Modalverben
+├── Adjektivdeklination
+├── Nebensätze
+│   ├── weil
+│   ├── dass
+│   └── wenn
+├── comparatif
+└── impératif
+
+B1 devient plus riche :
+
+B1
+├── Relativsätze
+├── Passiv
+├── Konjunktiv II
+├── Infinitiv mit zu
+├── obwohl / trotzdem
+├── während
+├── damit / um...zu
+├── Plusquamperfekt
+├── Genitiv
+└── connecteurs avancés
+
+Et B2 :
+
+B2
+├── Passiv avancé
+├── Nominalisierung
+├── Partizip I / II
+├── Konjunktiv I
+├── discours indirect
+├── connecteurs complexes
+├── structures formelles
+├── style écrit
+├── argumentation
+└── nuances grammaticales
+3. Chaque leçon doit utiliser le même modèle
+
+C'est très important.
+
+Au lieu d'écrire chaque cours différemment, crée un Grammar Lesson Schema.
+
+Par exemple :
+
+GRAMMAR LESSON
+
+Titre
+→ Akkusativ
+
+Niveau
+→ A1
+
+Objectif
+→ Comprendre quand utiliser l'accusatif.
+
+────────────────────
+
+01 — Explication simple
+
+02 — Règle
+
+03 — Tableau
+
+04 — Exemples
+
+05 — Attention / pièges
+
+06 — Exemple réel
+
+07 — Mini quiz
+
+08 — Résumé
+
+09 — À retenir
+
+Exemple visuel :
+
+────────────────────────────
+         AKKUSATIV
+              A1
+────────────────────────────
+
+Quand l'utiliser ?
+
+Le Akkusativ est notamment utilisé
+pour le complément d'objet direct.
+
+Ich sehe den Mann.
+
+             ↓
+
+der Mann → den Mann
+
+
+TABLEAU
+
+Nominativ       Akkusativ
+
+der             den
+die             die
+das             das
+die             die
+
+
+EXEMPLES
+
+Ich kaufe einen Kaffee.
+Ich sehe die Frau.
+Ich habe ein Auto.
+
+
+⚠ Attention
+
+der → den
+
+C'est le changement principal
+à retenir au début.
+
+
+QUIZ
+
+Ich sehe ___ Mann.
+
+○ der
+● den
+○ dem
+
+Ça rend toute l'application cohérente.
+
+4. Vocabulaire
+
+Même principe : pas un dictionnaire gigantesque.
+
+Organisation :
+
+Vocabulary
+│
+├── A1
+│   ├── Présentations
+│   ├── Famille
+│   ├── Maison
+│   ├── Nourriture
+│   ├── Ville
+│   ├── Travail
+│   ├── Temps
+│   ├── Transport
+│   └── Santé
+│
+├── A2
+│   └── ...
+│
+├── B1
+│   └── ...
+│
+└── B2
+    └── ...
+
+Une fiche vocabulaire peut contenir :
+
+die Wohnung
+────────────
+
+Appartement
+
+Genre
+die
+
+Pluriel
+die Wohnungen
+
+Niveau
+A1
+
+Exemple
+Ich wohne in einer kleinen Wohnung.
+
+Expression associée
+eine Wohnung mieten
+
+Audio        🔊
+
+☆ Ajouter aux favoris
+
+Mais je mettrais également quelque chose d'important :
+
+ne stocke pas seulement des mots.
+
+Stocke trois catégories :
+
+WORD
+Haus
+
+EXPRESSION
+zu Hause
+
+CHUNK
+Ich hätte gerne...
+
+Parce qu'en allemand, apprendre des groupes de mots est souvent beaucoup plus utile qu'apprendre uniquement des mots isolés.
+
+5. Le système de progression
+
+Même dans la V1, ajoute une progression simple.
+
+A1
+██████████████░░░░░░ 67%
+
+Grammaire
+12 / 20 leçons
+
+Vocabulaire
+324 / 500 mots
+
+Pour chaque élément :
+
+○ Nouveau
+◐ En cours
+● Maîtrisé
+
+Tu peux ensuite afficher :
+
+Continue learning
+
+Akkusativ
+████████░░
+
+8 min
+
+[ Continuer ]
+
+Cela donne immédiatement l'impression d'une vraie application d'apprentissage et non d'un PDF avec un menu.
+
+6. Navigation que je ferais
+
+Pour mobile :
+
+┌─────────────────────────────┐
+│ Guten Morgen 👋             │
+│                             │
+│ Niveau actuel               │
+│ B1                          │
+│ ███████████░░ 64 %          │
+│                             │
+│ Continuer                   │
+│ ┌─────────────────────────┐ │
+│ │ Wechselpräpositionen    │ │
+│ │ 8 min                   │ │
+│ │ Continue →              │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Apprendre                   │
+│                             │
+│  Grammar     Vocabulary     │
+│                             │
+│ À revoir                    │
+│ 12 mots • 2 règles          │
+└─────────────────────────────┘
+
+ Home   Learn   Review   Profile
+
+Le bouton Learn :
+
+           LEARN
+
+[A1] [A2] [B1] [B2]
+
+
+┌──────────────────┐
+│ Aa               │
+│ GRAMMAR          │
+│ 34 lessons       │
+└──────────────────┘
+
+┌──────────────────┐
+│ ABC              │
+│ VOCABULARY       │
+│ 720 words        │
+└──────────────────┘

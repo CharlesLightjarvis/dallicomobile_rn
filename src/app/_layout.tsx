@@ -1,18 +1,80 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import {
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from "@expo-google-fonts/space-grotesk";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useThemeColor } from "heroui-native/hooks";
+import { HeroUINativeProvider } from "heroui-native/provider";
+import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Uniwind, useUniwind } from "uniwind";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import "../global.css";
+
+import { queryClient } from "@/config/query-client";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { AuthProvider } from "@/features/auth/providers/auth-provider";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+const heroUIConfig = { devInfo: { stylingPrinciples: false } } as const;
+
+function AppNavigator() {
+  const { user, isReady } = useAuth();
+  const { theme } = useUniwind();
+  const navigationTheme = theme === "dark" ? DarkTheme : DefaultTheme;
+
+  useEffect(() => {
+    if (isReady) SplashScreen.hide();
+  }, [isReady]);
+
+  if (!isReady) return null;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+    <ThemeProvider value={navigationTheme}>
+      <StatusBar animated style="auto" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={!user}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        <Stack.Protected guard={Boolean(user)}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+      </Stack>
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  const [backgroundColor] = useThemeColor(["background"]);
+  const [fontsLoaded, fontError] = useFonts({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
+
+  useEffect(() => {
+    Uniwind.setTheme("system");
+  }, []);
+
+  if (!fontsLoaded && !fontError) return null;
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
+      <QueryClientProvider client={queryClient}>
+        <HeroUINativeProvider config={heroUIConfig}>
+          <AuthProvider>
+            <AppNavigator />
+          </AuthProvider>
+        </HeroUINativeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
