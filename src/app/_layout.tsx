@@ -8,7 +8,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useThemeColor } from "heroui-native/hooks";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import { useEffect } from "react";
@@ -20,6 +19,8 @@ import "../global.css";
 import { queryClient } from "@/config/query-client";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { AuthProvider } from "@/features/auth/providers/auth-provider";
+import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,11 +39,11 @@ function AppNavigator() {
 
   return (
     <ThemeProvider value={navigationTheme}>
-      <StatusBar animated style="auto" />
+      <StatusBar animated style={theme === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerLargeTitleEnabled: false,
-          headerTransparent: true,
+          headerTransparent: Platform.OS === "ios",
           headerShadowVisible: false,
           headerBackButtonDisplayMode: "minimal",
         }}
@@ -102,6 +103,28 @@ function AppNavigator() {
 
               return {
                 title: params?.title ?? "Leçon",
+              };
+            }}
+          />
+
+          <Stack.Screen
+            name="practice/vocabulary/index"
+            options={{
+              title: "Vocabulaire",
+            }}
+          />
+
+          <Stack.Screen
+            name="practice/vocabulary/[theme]"
+            options={({ route }) => {
+              const params = route.params as
+                | {
+                    title?: string;
+                  }
+                | undefined;
+
+              return {
+                title: params?.title ?? "Vocabulaire",
               };
             }}
           />
