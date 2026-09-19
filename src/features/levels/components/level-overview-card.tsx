@@ -21,12 +21,9 @@ const STATUS_ICONS = {
 };
 
 export function LevelOverviewCard({ level }: { level: Level }) {
-  const [accentColor, defaultColor, successColor, warningColor] = useThemeColor([
-    "accent",
-    "default-foreground",
-    "success",
-    "warning",
-  ]);
+  const [accentColor, defaultColor, successColor, warningColor] = useThemeColor(
+    ["accent", "default-foreground", "success", "warning"],
+  );
   const isInProgress = level.status === "in_progress";
   const isCompleted = level.status === "completed";
   const statusColor = isCompleted
@@ -37,7 +34,7 @@ export function LevelOverviewCard({ level }: { level: Level }) {
 
   const openLevel = () => {
     router.push({
-      pathname: "/levels/[level]",
+      pathname: "/learn/levels/[level]",
       params: { level: level.code, title: level.title },
     });
   };
@@ -46,7 +43,12 @@ export function LevelOverviewCard({ level }: { level: Level }) {
     <Card className="gap-4 rounded-3xl">
       <Card.Header className="gap-3">
         <View className="flex-row items-center gap-2">
-          <Chip className="self-center" color="accent" size="md" variant="primary">
+          <Chip
+            className="self-center"
+            color="accent"
+            size="md"
+            variant="primary"
+          >
             <Chip.Label>{level.code}</Chip.Label>
           </Chip>
 
@@ -55,16 +57,28 @@ export function LevelOverviewCard({ level }: { level: Level }) {
               {level.title}
             </Card.Title>
             <Chip
-              color={isCompleted ? "success" : isInProgress ? "warning" : "default"}
+              color={
+                isCompleted ? "success" : isInProgress ? "warning" : "default"
+              }
               size="sm"
               variant="soft"
             >
-              <Ionicons color={statusColor} name={STATUS_ICONS[level.status]} size={13} />
+              <Ionicons
+                color={statusColor}
+                name={STATUS_ICONS[level.status]}
+                size={13}
+              />
               <Chip.Label>{STATUS_LABELS[level.status]}</Chip.Label>
             </Chip>
           </View>
 
-          <Button accessibilityLabel={`Ouvrir le niveau ${level.code}`} isIconOnly size="sm" variant="secondary" onPress={openLevel}>
+          <Button
+            accessibilityLabel={`Ouvrir le niveau ${level.code}`}
+            isIconOnly
+            size="sm"
+            variant="secondary"
+            onPress={openLevel}
+          >
             <Ionicons color={accentColor} name="arrow-forward" size={18} />
           </Button>
         </View>
@@ -77,20 +91,30 @@ export function LevelOverviewCard({ level }: { level: Level }) {
       <Card.Body>
         <View className="gap-2 rounded-2xl bg-surface-secondary p-3">
           <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-xs font-medium text-muted">Progression du cycle</Text>
+            <Text className="text-xs font-medium text-muted">
+              Progression du cycle
+            </Text>
             <Text className="text-xs font-bold text-foreground">
-              {level.progress}% · {level.completed_lessons_count}/{level.lessons_count} leçons
+              {level.progress}% · {level.completed_lessons_count}/
+              {level.lessons_count} leçons
             </Text>
           </View>
           <View className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-            <View className="h-full rounded-full bg-accent" style={{ width: `${level.progress}%` }} />
+            <View
+              className="h-full rounded-full bg-accent"
+              style={{ width: `${level.progress}%` }}
+            />
           </View>
         </View>
       </Card.Body>
 
       <Card.Footer>
         <Button className="w-full" onPress={openLevel}>
-          {isInProgress ? "Continuer le niveau" : isCompleted ? "Réviser le niveau" : "Voir les chapitres"}
+          {isInProgress
+            ? "Continuer le niveau"
+            : isCompleted
+              ? "Réviser le niveau"
+              : "Voir les chapitres"}
         </Button>
       </Card.Footer>
     </Card>

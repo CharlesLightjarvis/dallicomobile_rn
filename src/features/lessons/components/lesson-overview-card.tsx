@@ -21,24 +21,20 @@ const STATUS_ICONS = {
 };
 
 export function LessonOverviewCard({ lesson }: { lesson: LessonSummary }) {
-  const [accentColor, defaultColor, successColor, warningColor] =
-    useThemeColor([
-      "accent",
-      "default-foreground",
-      "success",
-      "warning",
-    ]);
+  const [accentColor, defaultColor, successColor, warningColor] = useThemeColor(
+    ["accent", "default-foreground", "success", "warning"],
+  );
   const isInProgress = lesson.status === "in_progress";
   const isCompleted = lesson.status === "completed";
   const statusColor = isCompleted
-      ? successColor
-      : isInProgress
-        ? warningColor
-        : defaultColor;
+    ? successColor
+    : isInProgress
+      ? warningColor
+      : defaultColor;
 
   const openLesson = () => {
     router.push({
-      pathname: "/lessons/[lesson]",
+      pathname: "/learn/lessons/[lesson]",
       params: { lesson: lesson.slug, title: lesson.title },
     });
   };
@@ -61,11 +57,17 @@ export function LessonOverviewCard({ lesson }: { lesson: LessonSummary }) {
               {lesson.title}
             </Card.Title>
             <Chip
-              color={isCompleted ? "success" : isInProgress ? "warning" : "default"}
+              color={
+                isCompleted ? "success" : isInProgress ? "warning" : "default"
+              }
               size="sm"
               variant="soft"
             >
-              <Ionicons color={statusColor} name={STATUS_ICONS[lesson.status]} size={13} />
+              <Ionicons
+                color={statusColor}
+                name={STATUS_ICONS[lesson.status]}
+                size={13}
+              />
               <Chip.Label>{STATUS_LABELS[lesson.status]}</Chip.Label>
             </Chip>
           </View>
@@ -91,13 +93,19 @@ export function LessonOverviewCard({ lesson }: { lesson: LessonSummary }) {
       <Card.Body>
         <View className="gap-2 rounded-2xl bg-surface-secondary p-3">
           <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-xs font-medium text-muted">Progression des exercices</Text>
+            <Text className="text-xs font-medium text-muted">
+              Progression des exercices
+            </Text>
             <Text className="text-xs font-bold text-foreground">
-              {lesson.progress}% · {lesson.answered_exercises_count}/{lesson.exercises_count} exercices
+              {lesson.progress}% · {lesson.answered_exercises_count}/
+              {lesson.exercises_count} exercices
             </Text>
           </View>
           <View className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-            <View className="h-full rounded-full bg-accent" style={{ width: `${lesson.progress}%` }} />
+            <View
+              className="h-full rounded-full bg-accent"
+              style={{ width: `${lesson.progress}%` }}
+            />
           </View>
         </View>
       </Card.Body>
@@ -105,10 +113,10 @@ export function LessonOverviewCard({ lesson }: { lesson: LessonSummary }) {
       <Card.Footer>
         <Button className="w-full" onPress={openLesson}>
           {isInProgress
-              ? "Continuer la leçon"
-              : isCompleted
-                ? "Réviser la leçon"
-                : "Commencer la leçon"}
+            ? "Continuer la leçon"
+            : isCompleted
+              ? "Réviser la leçon"
+              : "Commencer la leçon"}
         </Button>
       </Card.Footer>
     </Card>

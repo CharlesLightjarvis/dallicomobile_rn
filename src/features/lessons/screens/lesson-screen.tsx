@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { ScrollView, View } from "react-native";
 
@@ -38,7 +38,7 @@ export function LessonScreen() {
 
   const returnToLessons = () => {
     router.dismissTo({
-      pathname: "/chapters/[chapter]",
+      pathname: "/learn/chapters/[chapter]",
       params: { chapter: data.chapter.slug, title: data.chapter.title },
     });
   };
@@ -49,7 +49,6 @@ export function LessonScreen() {
       contentContainerClassName="mx-auto w-full max-w-3xl gap-6 px-4 pb-16 pt-6"
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Stack.Screen options={{ title: data.title }} />
       <LessonMarkdown content={data.content_markdown} />
       <LessonQuizSheet lesson={data} onFinished={returnToLessons} />
     </ScrollView>

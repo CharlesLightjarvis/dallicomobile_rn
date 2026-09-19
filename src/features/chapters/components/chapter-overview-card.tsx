@@ -21,24 +21,20 @@ const STATUS_ICONS = {
 };
 
 export function ChapterOverviewCard({ chapter }: { chapter: Chapter }) {
-  const [accentColor, defaultColor, successColor, warningColor] =
-    useThemeColor([
-      "accent",
-      "default-foreground",
-      "success",
-      "warning",
-    ]);
+  const [accentColor, defaultColor, successColor, warningColor] = useThemeColor(
+    ["accent", "default-foreground", "success", "warning"],
+  );
   const isInProgress = chapter.status === "in_progress";
   const isCompleted = chapter.status === "completed";
   const statusColor = isCompleted
-      ? successColor
-      : isInProgress
-        ? warningColor
-        : defaultColor;
+    ? successColor
+    : isInProgress
+      ? warningColor
+      : defaultColor;
 
   const openChapter = () => {
     router.push({
-      pathname: "/chapters/[chapter]",
+      pathname: "/learn/chapters/[chapter]",
       params: { chapter: chapter.slug, title: chapter.title },
     });
   };
@@ -61,11 +57,17 @@ export function ChapterOverviewCard({ chapter }: { chapter: Chapter }) {
               {chapter.title}
             </Card.Title>
             <Chip
-              color={isCompleted ? "success" : isInProgress ? "warning" : "default"}
+              color={
+                isCompleted ? "success" : isInProgress ? "warning" : "default"
+              }
               size="sm"
               variant="soft"
             >
-              <Ionicons color={statusColor} name={STATUS_ICONS[chapter.status]} size={13} />
+              <Ionicons
+                color={statusColor}
+                name={STATUS_ICONS[chapter.status]}
+                size={13}
+              />
               <Chip.Label>{STATUS_LABELS[chapter.status]}</Chip.Label>
             </Chip>
           </View>
@@ -91,13 +93,19 @@ export function ChapterOverviewCard({ chapter }: { chapter: Chapter }) {
       <Card.Body>
         <View className="gap-2 rounded-2xl bg-surface-secondary p-3">
           <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-xs font-medium text-muted">Progression du chapitre</Text>
+            <Text className="text-xs font-medium text-muted">
+              Progression du chapitre
+            </Text>
             <Text className="text-xs font-bold text-foreground">
-              {chapter.progress}% · {chapter.completed_lessons_count}/{chapter.lessons_count} leçons
+              {chapter.progress}% · {chapter.completed_lessons_count}/
+              {chapter.lessons_count} leçons
             </Text>
           </View>
           <View className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-            <View className="h-full rounded-full bg-accent" style={{ width: `${chapter.progress}%` }} />
+            <View
+              className="h-full rounded-full bg-accent"
+              style={{ width: `${chapter.progress}%` }}
+            />
           </View>
         </View>
       </Card.Body>
@@ -105,10 +113,10 @@ export function ChapterOverviewCard({ chapter }: { chapter: Chapter }) {
       <Card.Footer>
         <Button className="w-full" onPress={openChapter}>
           {isInProgress
-              ? "Continuer le chapitre"
-              : isCompleted
-                ? "Réviser le chapitre"
-                : "Voir les leçons"}
+            ? "Continuer le chapitre"
+            : isCompleted
+              ? "Réviser le chapitre"
+              : "Voir les leçons"}
         </Button>
       </Card.Footer>
     </Card>

@@ -19,7 +19,7 @@ export default function TabsLayout() {
         },
       }}
     >
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Label>Accueil</NativeTabs.Trigger.Label>
 
         <NativeTabs.Trigger.Icon
@@ -31,7 +31,7 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="(learn)">
+      <NativeTabs.Trigger name="learn">
         <NativeTabs.Trigger.Label>Apprendre</NativeTabs.Trigger.Label>
 
         <NativeTabs.Trigger.Icon

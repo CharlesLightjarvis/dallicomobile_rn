@@ -39,12 +39,72 @@ function AppNavigator() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar animated style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerLargeTitleEnabled: false,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerBackButtonDisplayMode: "minimal",
+        }}
+      >
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>
+
         <Stack.Protected guard={Boolean(user)}>
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+            }}
+          />
+
+          <Stack.Screen
+            name="learn/levels/[level]"
+            options={({ route }) => {
+              const params = route.params as
+                | {
+                    level?: string;
+                  }
+                | undefined;
+
+              return {
+                title: params?.level
+                  ? `Niveau ${params.level.toUpperCase()}`
+                  : "Niveau",
+              };
+            }}
+          />
+
+          <Stack.Screen
+            name="learn/chapters/[chapter]"
+            options={({ route }) => {
+              const params = route.params as
+                | {
+                    title?: string;
+                  }
+                | undefined;
+
+              return {
+                title: params?.title ?? "Chapitre",
+              };
+            }}
+          />
+
+          <Stack.Screen
+            name="learn/lessons/[lesson]"
+            options={({ route }) => {
+              const params = route.params as
+                | {
+                    title?: string;
+                  }
+                | undefined;
+
+              return {
+                title: params?.title ?? "Leçon",
+              };
+            }}
+          />
         </Stack.Protected>
       </Stack>
     </ThemeProvider>
