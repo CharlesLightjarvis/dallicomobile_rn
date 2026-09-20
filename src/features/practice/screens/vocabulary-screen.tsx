@@ -10,6 +10,11 @@ import {
   View,
 } from "react-native";
 
+const CARD_RADIUS = 2;
+const CARD_DEPTH = 6;
+const CARD_PRESS_DEPTH = 3;
+const CARD_HEIGHT = 192; // h-48
+
 const THEMES = [
   {
     id: "airport",
@@ -59,7 +64,7 @@ export function VocabularyScreen() {
   return (
     <ScrollView
       className="flex-1 bg-app-background"
-      contentContainerClassName="gap-5 px-4 pb-24 pt-4"
+      contentContainerClassName="gap-5 px-4 "
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
     >
@@ -87,55 +92,85 @@ export function VocabularyScreen() {
                 },
               })
             }
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.85 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            })}
+            style={{
+              height: CARD_HEIGHT + CARD_DEPTH,
+            }}
           >
-            <Card className="h-36 w-full overflow-hidden p-0">
-              {/* IMAGE DE FOND */}
-              <Image
-                source={{ uri: theme.image }}
-                resizeMode="cover"
-                style={StyleSheet.absoluteFill}
-              />
+            {({ pressed }) => (
+              <View
+                style={{
+                  position: "relative",
+                  height: CARD_HEIGHT + CARD_DEPTH,
+                }}
+              >
+                {/* PROFONDEUR 3D */}
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: "absolute",
+                    top: CARD_DEPTH,
+                    left: 0,
+                    right: 0,
+                    height: CARD_HEIGHT,
+                    borderRadius: CARD_RADIUS,
+                    backgroundColor: "#111827",
+                  }}
+                />
 
-              {/* DÉGRADÉ POUR LA LISIBILITÉ */}
-              <LinearGradient
-                colors={[
-                  "rgba(0,0,0,0.05)",
-                  "rgba(0,0,0,0.20)",
-                  "rgba(0,0,0,0.78)",
-                ]}
-                locations={[0, 0.45, 1]}
-                style={StyleSheet.absoluteFill}
-              />
+                {/* FACE */}
+                <Card
+                  className="absolute inset-x-0 top-0 h-48 w-full overflow-hidden p-0"
+                  style={{
+                    borderRadius: CARD_RADIUS,
+                    transform: [
+                      {
+                        translateY: pressed ? CARD_PRESS_DEPTH : 0,
+                      },
+                    ],
+                  }}
+                >
+                  <Image
+                    source={{ uri: theme.image }}
+                    resizeMode="cover"
+                    style={StyleSheet.absoluteFill}
+                  />
 
-              {/* CONTENU */}
-              <View className="flex-1 justify-between p-3">
-                <View className="items-end">
-                  <View className="size-8 items-center justify-center rounded-full bg-black/25">
-                    <Text className="text-xl leading-6 text-white">›</Text>
+                  <LinearGradient
+                    colors={[
+                      "rgba(0,0,0,0.05)",
+                      "rgba(0,0,0,0.20)",
+                      "rgba(0,0,0,0.78)",
+                    ]}
+                    locations={[0, 0.45, 1]}
+                    style={StyleSheet.absoluteFill}
+                  />
+
+                  <View className="flex-1 justify-between p-3">
+                    <View className="items-end">
+                      <View className="size-8 items-center justify-center rounded-full bg-black/25">
+                        <Text className="text-xl leading-6 text-white">›</Text>
+                      </View>
+                    </View>
+
+                    <View className="gap-0.5">
+                      <Text
+                        className="text-base font-bold text-white"
+                        numberOfLines={1}
+                      >
+                        {theme.title}
+                      </Text>
+
+                      <Text
+                        className="text-xs leading-4 text-white/80"
+                        numberOfLines={2}
+                      >
+                        {theme.description}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-
-                <View className="gap-0.5">
-                  <Text
-                    className="text-base font-bold text-white"
-                    numberOfLines={1}
-                  >
-                    {theme.title}
-                  </Text>
-
-                  <Text
-                    className="text-xs leading-4 text-white/80"
-                    numberOfLines={2}
-                  >
-                    {theme.description}
-                  </Text>
-                </View>
+                </Card>
               </View>
-            </Card>
+            )}
           </Pressable>
         ))}
       </View>

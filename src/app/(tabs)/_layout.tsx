@@ -19,7 +19,7 @@ export default function TabsLayout() {
         },
       }}
     >
-      <NativeTabs.Trigger name="(home)">
+      {/* <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Label>Accueil</NativeTabs.Trigger.Label>
 
         <NativeTabs.Trigger.Icon
@@ -29,9 +29,9 @@ export default function TabsLayout() {
           }}
           renderingMode="template"
         />
-      </NativeTabs.Trigger>
+      </NativeTabs.Trigger> */}
 
-      <NativeTabs.Trigger name="learn">
+      <NativeTabs.Trigger name="(learn)">
         <NativeTabs.Trigger.Label>Apprendre</NativeTabs.Trigger.Label>
 
         <NativeTabs.Trigger.Icon

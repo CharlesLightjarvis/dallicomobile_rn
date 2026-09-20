@@ -46,7 +46,7 @@ export function LessonScreen() {
   return (
     <ScrollView
       className="flex-1 bg-app-background"
-      contentContainerClassName="mx-auto w-full max-w-3xl gap-6 px-4 pb-16 pt-6"
+      contentContainerClassName="mx-auto w-full max-w-3xl  px-4 "
       contentInsetAdjustmentBehavior="automatic"
     >
       <LessonMarkdown content={data.content_markdown} />
