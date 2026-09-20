@@ -8,6 +8,7 @@ export type Exercise = {
 export type ExerciseAttemptResult = {
   attempt_id: string;
   is_correct: boolean;
+  correct_answer: string | null;
   explanation: string | null;
   lesson_progress: number;
 };

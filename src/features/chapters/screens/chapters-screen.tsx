@@ -1,46 +1,36 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { Card } from "heroui-native/card";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { EmptyCard, ErrorCard, LoadingCard } from "@/components/query-feedback";
+import { ThreeDCard } from "@/components/ui/three-d-card";
 import { useChapters } from "@/features/chapters/hooks/use-chapters";
-
-const CARD_RADIUS = 2;
-const CARD_DEPTH = 6;
-const CARD_PRESS_DEPTH = 3;
 
 const CHAPTER_STYLES = [
   {
     icon: "chatbubbles-outline" as const,
     colors: ["#283B63", "#182238"] as const,
-    depth: "#0F1726",
   },
   {
     icon: "compass-outline" as const,
     colors: ["#315C55", "#19332F"] as const,
-    depth: "#0E211E",
   },
   {
     icon: "people-outline" as const,
     colors: ["#68436A", "#352236"] as const,
-    depth: "#241525",
   },
   {
     icon: "storefront-outline" as const,
     colors: ["#765032", "#3C291A"] as const,
-    depth: "#29190E",
   },
   {
     icon: "train-outline" as const,
     colors: ["#3F5275", "#202B40"] as const,
-    depth: "#121A29",
   },
   {
     icon: "sparkles-outline" as const,
     colors: ["#5E4A79", "#30263E"] as const,
-    depth: "#1D1629",
   },
 ] as const;
 
@@ -104,83 +94,67 @@ export function ChaptersScreen() {
       ) : data?.length ? (
         <>
           {/* ============================== */}
-          {/* STATS 3D */}
+          {/* STATS */}
           {/* ============================== */}
 
-          <View
-            style={{
-              position: "relative",
-              paddingBottom: CARD_DEPTH,
-            }}
+          <ThreeDCard
+            depth={6}
+            radius={2}
+            containerClassName="w-full"
+            className="w-full border border-border bg-surface p-3"
           >
-            {/* PROFONDEUR */}
-            <View
-              pointerEvents="none"
-              className="absolute inset-x-0 bg-surface-secondary"
-              style={{
-                top: CARD_DEPTH,
-                height: "100%",
-                borderRadius: CARD_RADIUS,
-              }}
-            />
+            <View className="flex-row items-center">
+              {/* TOTAL */}
 
-            {/* FACE */}
-            <Card
-              className="p-3"
-              style={{
-                borderRadius: CARD_RADIUS,
-              }}
-            >
-              <View className="flex-row items-center">
-                {/* TOTAL */}
-                <View className="flex-1 items-center gap-1">
-                  <Text className="text-[9px] font-bold uppercase tracking-wider text-muted">
-                    Chapitres
-                  </Text>
+              <View className="flex-1 items-center gap-1">
+                <Text className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                  Chapitres
+                </Text>
 
-                  <Text className="text-xl font-bold text-foreground">
-                    {totalChapters}
-                  </Text>
+                <Text className="text-xl font-bold text-foreground">
+                  {totalChapters}
+                </Text>
 
-                  <Text className="text-[9px] text-muted">disponibles</Text>
-                </View>
-
-                <View className="h-10 w-px bg-separator" />
-
-                {/* TERMINÉS */}
-                <View className="flex-1 items-center gap-1">
-                  <Text className="text-[9px] font-bold uppercase tracking-wider text-muted">
-                    Terminés
-                  </Text>
-
-                  <Text className="text-xl font-bold text-foreground">
-                    {completedChapters}
-
-                    <Text className="text-xs font-medium text-muted">
-                      /{totalChapters}
-                    </Text>
-                  </Text>
-
-                  <Text className="text-[9px] text-muted">complétés</Text>
-                </View>
-
-                <View className="h-10 w-px bg-separator" />
-
-                {/* PROGRESSION */}
-                <View className="flex-1 items-center gap-1">
-                  <Text className="text-[9px] font-bold uppercase tracking-wider text-muted">
-                    Progression
-                  </Text>
-
-                  <Text className="text-xl font-bold text-accent">
-                    {globalProgress}%
-                  </Text>
-
-                  <Text className="text-[9px] text-muted">du niveau</Text>
-                </View>
+                <Text className="text-[9px] text-muted">disponibles</Text>
               </View>
-            </Card>
-          </View>
+
+              <View className="h-10 w-px bg-separator" />
+
+              {/* TERMINÉS */}
+
+              <View className="flex-1 items-center gap-1">
+                <Text className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                  Terminés
+                </Text>
+
+                <Text className="text-xl font-bold text-foreground">
+                  {completedChapters}
+
+                  <Text className="text-xs font-medium text-muted">
+                    /{totalChapters}
+                  </Text>
+                </Text>
+
+                <Text className="text-[9px] text-muted">complétés</Text>
+              </View>
+
+              <View className="h-10 w-px bg-separator" />
+
+              {/* PROGRESSION */}
+
+              <View className="flex-1 items-center gap-1">
+                <Text className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                  Progression
+                </Text>
+
+                <Text className="text-xl font-bold text-accent">
+                  {globalProgress}%
+                </Text>
+
+                <Text className="text-[9px] text-muted">du niveau</Text>
+              </View>
+            </View>
+          </ThreeDCard>
 
           {/* ============================== */}
           {/* CHAPTER CARDS */}
@@ -202,186 +176,147 @@ export function ChaptersScreen() {
               const isStarted = progress > 0 && progress < 100;
 
               return (
-                <Pressable
+                <ThreeDCard
                   key={chapter.slug}
                   onPress={() => openChapter(chapter.slug, chapter.title)}
-                  style={{
-                    height: 176 + CARD_DEPTH,
-                  }}
+                  depth={6}
+                  pressDepth={3}
+                  radius={2}
+                  containerClassName="w-full"
+                  className="h-46 w-full overflow-hidden p-0"
                 >
-                  {({ pressed }) => (
-                    <View
-                      style={{
-                        position: "relative",
-                        height: 176 + CARD_DEPTH,
-                      }}
-                    >
-                      {/* ============================== */}
-                      {/* PROFONDEUR 3D */}
-                      {/* ============================== */}
+                  <LinearGradient
+                    colors={visual.colors}
+                    start={{
+                      x: 0,
+                      y: 0,
+                    }}
+                    end={{
+                      x: 1,
+                      y: 1,
+                    }}
+                    style={{
+                      flex: 1,
+                    }}
+                  >
+                    {/* DECOR */}
 
-                      <View
-                        pointerEvents="none"
-                        style={{
-                          position: "absolute",
+                    <View className="absolute -right-14 -top-16 size-40 rounded-full border border-white/10" />
 
-                          top: CARD_DEPTH,
-                          left: 0,
-                          right: 0,
+                    <View className="absolute -bottom-16 right-12 size-28 rounded-full bg-white/5" />
 
-                          height: 176,
+                    {/* CARD */}
 
-                          borderRadius: CARD_RADIUS,
+                    <View className="h-44 justify-between p-4">
+                      {/* TOP */}
 
-                          backgroundColor: visual.depth,
-                        }}
-                      />
+                      <View className="flex-row items-start justify-between">
+                        <View className="flex-row items-center gap-2">
+                          <Text className="text-[10px] font-bold tracking-[2px] text-white/55">
+                            CHAPTER
+                          </Text>
 
-                      {/* ============================== */}
-                      {/* FACE */}
-                      {/* ============================== */}
+                          <Text className="text-[10px] font-bold text-white">
+                            {chapterNumber}
+                          </Text>
+                        </View>
 
-                      <Card
-                        className="absolute inset-x-0 top-0 h-44 overflow-hidden p-0"
-                        style={{
-                          borderRadius: CARD_RADIUS,
+                        <View className="size-9 items-center justify-center rounded-xl bg-white/10">
+                          <Ionicons
+                            name={visual.icon}
+                            size={19}
+                            color="white"
+                          />
+                        </View>
+                      </View>
 
-                          transform: [
-                            {
-                              translateY: pressed ? CARD_PRESS_DEPTH : 0,
-                            },
-                          ],
-                        }}
-                      >
-                        <LinearGradient
-                          colors={visual.colors}
-                          start={{
-                            x: 0,
-                            y: 0,
-                          }}
-                          end={{
-                            x: 1,
-                            y: 1,
-                          }}
-                          style={{
-                            flex: 1,
-                          }}
-                        >
-                          {/* DECOR */}
-                          <View className="absolute -right-14 -top-16 size-40 rounded-full border border-white/10" />
+                      {/* CONTENT */}
 
-                          <View className="absolute -bottom-16 right-12 size-28 rounded-full bg-white/5" />
+                      <View className="flex-row items-end gap-4">
+                        <Text className="text-[54px] font-bold leading-14.5 text-white/15">
+                          {chapterNumber}
+                        </Text>
 
-                          {/* HAUTEUR CONSERVÉE */}
-                          <View className="h-44 justify-between p-4">
-                            {/* TOP */}
-                            <View className="flex-row items-start justify-between">
-                              <View className="flex-row items-center gap-2">
-                                <Text className="text-[10px] font-bold tracking-[2px] text-white/55">
-                                  CHAPTER
-                                </Text>
+                        <View className="min-w-0 flex-1 gap-1 pb-1">
+                          <Text
+                            className="text-xl font-bold leading-6 text-white"
+                            numberOfLines={2}
+                          >
+                            {chapter.title}
+                          </Text>
 
-                                <Text className="text-[10px] font-bold text-white">
-                                  {chapterNumber}
-                                </Text>
-                              </View>
+                          <Text
+                            className="text-xs leading-4 text-white/65"
+                            numberOfLines={2}
+                          >
+                            {chapter.description}
+                          </Text>
+                        </View>
+                      </View>
 
-                              <View className="size-9 items-center justify-center rounded-xl bg-white/10">
-                                <Ionicons
-                                  name={visual.icon}
-                                  size={19}
-                                  color="white"
-                                />
-                              </View>
-                            </View>
+                      {/* BOTTOM */}
 
-                            {/* CONTENT */}
-                            <View className="flex-row items-end gap-4">
-                              <Text className="text-[54px] font-bold leading-14.5 text-white/15">
-                                {chapterNumber}
-                              </Text>
+                      <View className="gap-1">
+                        <View className="flex-row items-center justify-between">
+                          <View className="flex-row items-center gap-1.5">
+                            {isCompleted ? (
+                              <Ionicons
+                                name="checkmark-circle"
+                                size={13}
+                                color="rgba(255,255,255,0.65)"
+                              />
+                            ) : isStarted ? (
+                              <View className="size-1.5 rounded-full bg-white/70" />
+                            ) : null}
 
-                              <View className="min-w-0 flex-1 gap-1 pb-1">
-                                <Text
-                                  className="text-xl font-bold leading-6 text-white"
-                                  numberOfLines={2}
-                                >
-                                  {chapter.title}
-                                </Text>
-
-                                <Text
-                                  className="text-xs leading-4 text-white/65"
-                                  numberOfLines={2}
-                                >
-                                  {chapter.description}
-                                </Text>
-                              </View>
-                            </View>
-
-                            {/* BOTTOM */}
-                            <View className="gap-1">
-                              <View className="flex-row items-center justify-between">
-                                <View className="flex-row items-center gap-1.5">
-                                  {isCompleted ? (
-                                    <Ionicons
-                                      name="checkmark-circle"
-                                      size={13}
-                                      color="rgba(255,255,255,0.65)"
-                                    />
-                                  ) : isStarted ? (
-                                    <View className="size-1.5 rounded-full bg-white/70" />
-                                  ) : null}
-
-                                  <Text className="text-[10px] font-semibold tracking-wider text-white/45">
-                                    {isCompleted
-                                      ? "TERMINÉ"
-                                      : isStarted
-                                        ? "CONTINUER"
-                                        : "OUVRIR LE CHAPITRE"}
-                                  </Text>
-                                </View>
-
-                                <View className="size-8 items-center justify-center rounded-full bg-white">
-                                  <Ionicons
-                                    name={
-                                      isCompleted
-                                        ? "refresh-outline"
-                                        : "arrow-forward"
-                                    }
-                                    size={16}
-                                    color="#171717"
-                                  />
-                                </View>
-                              </View>
-
-                              {/* PROGRESSION */}
-                              <View className="gap-1">
-                                <View className="flex-row items-center justify-between">
-                                  <Text className="text-[9px] font-medium text-white/55">
-                                    Progression
-                                  </Text>
-
-                                  <Text className="text-[9px] font-bold text-white/55">
-                                    {progress}%
-                                  </Text>
-                                </View>
-
-                                <View className="h-1 overflow-hidden rounded-full bg-white/15">
-                                  <View
-                                    className="h-full rounded-full bg-white"
-                                    style={{
-                                      width: `${progress}%`,
-                                    }}
-                                  />
-                                </View>
-                              </View>
-                            </View>
+                            <Text className="text-[10px] font-semibold tracking-wider text-white/45">
+                              {isCompleted
+                                ? "TERMINÉ"
+                                : isStarted
+                                  ? "CONTINUER"
+                                  : "OUVRIR LE CHAPITRE"}
+                            </Text>
                           </View>
-                        </LinearGradient>
-                      </Card>
+
+                          <View className="size-8 items-center justify-center rounded-full bg-white">
+                            <Ionicons
+                              name={
+                                isCompleted
+                                  ? "refresh-outline"
+                                  : "arrow-forward"
+                              }
+                              size={16}
+                              color="#171717"
+                            />
+                          </View>
+                        </View>
+
+                        {/* PROGRESSION */}
+
+                        <View className="gap-1">
+                          <View className="flex-row items-center justify-between">
+                            <Text className="text-[9px] font-medium text-white/55">
+                              Progression
+                            </Text>
+
+                            <Text className="text-[9px] font-bold text-white/55">
+                              {progress}%
+                            </Text>
+                          </View>
+
+                          <View className="h-1 overflow-hidden rounded-full bg-white/15">
+                            <View
+                              className="h-full rounded-full bg-white"
+                              style={{
+                                width: `${progress}%`,
+                              }}
+                            />
+                          </View>
+                        </View>
+                      </View>
                     </View>
-                  )}
-                </Pressable>
+                  </LinearGradient>
+                </ThreeDCard>
               );
             })}
           </View>

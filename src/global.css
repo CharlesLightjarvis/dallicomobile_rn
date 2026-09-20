@@ -4,116 +4,379 @@
 
 @layer theme {
   :root {
+    /* ============================================================
+       LIGHT
+       ============================================================ */
+
     @variant light {
+      /* ----------------------------------------------------------
+         TYPOGRAPHY
+         ---------------------------------------------------------- */
+
       --font-normal: "SpaceGrotesk_400Regular";
       --font-medium: "SpaceGrotesk_500Medium";
       --font-semibold: "SpaceGrotesk_600SemiBold";
       --font-bold: "SpaceGrotesk_700Bold";
+
+      /* ----------------------------------------------------------
+         RADIUS
+         IMPORTANT : volontairement très faible
+         0.1rem ≈ 1.6px
+         ---------------------------------------------------------- */
+
       --radius: 0.1rem;
 
-      --background: oklch(0.975 0.012 286);
-      --foreground: oklch(0.2 0.025 286);
-      --surface: oklch(1 0.003 286);
-      --surface-foreground: oklch(0.2 0.025 286);
-      --surface-secondary: oklch(0.955 0.018 286);
-      --surface-secondary-foreground: oklch(0.22 0.03 286);
-      --surface-tertiary: oklch(0.925 0.025 286);
-      --surface-tertiary-foreground: oklch(0.24 0.035 286);
-      --overlay: oklch(0.995 0.006 286);
-      --overlay-foreground: oklch(0.2 0.025 286);
+      /* ----------------------------------------------------------
+         BASE
+         ---------------------------------------------------------- */
+
+      --background: oklch(0.9818 0.0054 95.0986);
+      --foreground: oklch(0.3438 0.0269 95.7226);
+
+      /* ----------------------------------------------------------
+         SURFACES
+         card -> surface
+         ---------------------------------------------------------- */
+
+      --surface: oklch(0.9818 0.0054 95.0986);
+      --surface-foreground: oklch(0.1908 0.002 106.5859);
+
+      --surface-secondary: oklch(0.9245 0.0138 92.9892);
+      --surface-secondary-foreground: oklch(0.4334 0.0177 98.6048);
+
+      --surface-tertiary: oklch(0.8847 0.0069 97.3627);
+      --surface-tertiary-foreground: oklch(0.3438 0.0269 95.7226);
+
+      /* ----------------------------------------------------------
+         OVERLAY / POPOVER
+         ---------------------------------------------------------- */
+
+      --overlay: oklch(1 0 0);
+      --overlay-foreground: oklch(0.2671 0.0196 98.939);
+
       --backdrop: oklch(0% 0 0 / 24%);
-      --muted: oklch(0.54 0.035 286);
-      --default: oklch(0.94 0.02 286);
-      --default-foreground: oklch(0.27 0.035 286);
-      --accent: oklch(0.4341 0.2462 286);
-      --accent-foreground: oklch(0.99 0 0);
-      --field-background: oklch(0.995 0.005 286);
-      --field-foreground: oklch(0.2 0.025 286);
-      --field-placeholder: oklch(0.58 0.03 286);
-      --field-border: oklch(0.885 0.027 286);
+
+      /* ----------------------------------------------------------
+         MUTED TEXT
+         Dans HeroUI Native `text-muted` utilise ce token.
+         ---------------------------------------------------------- */
+
+      --muted: oklch(0.6059 0.0075 97.4233);
+
+      /* ----------------------------------------------------------
+         DEFAULT / SECONDARY
+         ---------------------------------------------------------- */
+
+      --default: oklch(0.9245 0.0138 92.9892);
+      --default-foreground: oklch(0.4334 0.0177 98.6048);
+
+      /* ----------------------------------------------------------
+         BRAND / PRIMARY -> ACCENT
+         ---------------------------------------------------------- */
+
+      --accent: oklch(0.6171 0.1375 39.0427);
+      --accent-foreground: oklch(1 0 0);
+
+      /* ----------------------------------------------------------
+         FORM FIELDS
+         ---------------------------------------------------------- */
+
+      --field-background: oklch(1 0 0);
+      --field-foreground: oklch(0.2671 0.0196 98.939);
+      --field-placeholder: oklch(0.6059 0.0075 97.4233);
+
+      --field-border: oklch(0.7621 0.0156 98.3528);
+
+      /* ----------------------------------------------------------
+         SUCCESS
+         ---------------------------------------------------------- */
+
       --success: oklch(0.68 0.16 150);
-      --success-foreground: oklch(0.18 0.035 150);
+      --success-foreground: oklch(1 0 0);
+
+      /* ----------------------------------------------------------
+         WARNING
+         ---------------------------------------------------------- */
+
       --warning: oklch(0.8 0.15 82);
       --warning-foreground: oklch(0.25 0.055 82);
 
-      /* custom colors */
-      --color-app-background: oklch(0.988 0.006 286);
-      --color-accent-soft: oklch(0.4341 0.2462 286 / 0.12);
-      --color-success-soft: oklch(0.68 0.16 150 / 0.14);
-      --color-warning-soft: oklch(0.78 0.14 82 / 0.16);
-      --color-danger-soft: oklch(0.62 0.22 24 / 0.12);
+      /* ----------------------------------------------------------
+         DANGER / DESTRUCTIVE
+         ---------------------------------------------------------- */
 
-      --danger: oklch(0.62 0.22 24);
-      --danger-foreground: oklch(0.99 0 0);
-      --segment: oklch(0.985 0.008 286);
-      --segment-foreground: oklch(0.22 0.03 286);
-      --border: oklch(0.89 0.025 286);
-      --separator: oklch(0.85 0.03 286);
-      --focus: var(--accent);
-      --link: oklch(0.48 0.2 278);
+      --danger: oklch(0.6368 0.2078 25.3313);
+      --danger-foreground: oklch(1 0 0);
+
+      /* ----------------------------------------------------------
+         SEGMENT
+         ---------------------------------------------------------- */
+
+      --segment: oklch(0.9663 0.008 98.8792);
+      --segment-foreground: oklch(0.359 0.0051 106.6524);
+
+      /* ----------------------------------------------------------
+         BORDERS
+         ---------------------------------------------------------- */
+
+      --border: oklch(0.8847 0.0069 97.3627);
+
+      --separator: oklch(0.84 0.011 97);
+
+      /* ----------------------------------------------------------
+         FOCUS / RING
+         ---------------------------------------------------------- */
+
+      --focus: oklch(0.6171 0.1375 39.0427);
+
+      /* ----------------------------------------------------------
+         LINKS
+         ---------------------------------------------------------- */
+
+      --link: oklch(0.5583 0.1276 42.9956);
+
+      /* ==========================================================
+         APP CUSTOM COLORS
+         ========================================================== */
+
+      --color-app-background: oklch(0.9818 0.0054 95.0986);
+
+      --color-card-depth: oklch(0.78 0.035 70);
+
+      --color-accent-depth: oklch(0.48 0.14 39);
+
+      --color-success-depth: oklch(0.48 0.15 150);
+
+      --color-danger-depth: oklch(0.46 0.16 25);
+
+      --color-accent-soft: oklch(0.6171 0.1375 39.0427 / 0.12);
+
+      --color-success-soft: oklch(0.68 0.16 150 / 0.14);
+
+      --color-warning-soft: oklch(0.8 0.15 82 / 0.15);
+
+      --color-danger-soft: oklch(0.1908 0.002 106.5859 / 0.1);
+
+      /* ==========================================================
+         CHARTS
+         ========================================================== */
+
+      --color-chart-1: oklch(0.5583 0.1276 42.9956);
+      --color-chart-2: oklch(0.6898 0.1581 290.4107);
+      --color-chart-3: oklch(0.8816 0.0276 93.128);
+      --color-chart-4: oklch(0.8822 0.0403 298.1792);
+      --color-chart-5: oklch(0.5608 0.1348 42.0584);
+
+      /* ==========================================================
+         SIDEBAR / OPTIONAL APP SURFACES
+         ========================================================== */
+
+      --color-sidebar: oklch(0.9663 0.008 98.8792);
+
+      --color-sidebar-foreground: oklch(0.359 0.0051 106.6524);
+
+      --color-sidebar-primary: oklch(0.6171 0.1375 39.0427);
+
+      --color-sidebar-primary-foreground: oklch(0.9881 0 0);
+
+      --color-sidebar-accent: oklch(0.9245 0.0138 92.9892);
+
+      --color-sidebar-accent-foreground: oklch(0.325 0 0);
+
+      --color-sidebar-border: oklch(0.9401 0 0);
+
+      /* ==========================================================
+         SHADOWS
+         ========================================================== */
+
       --surface-shadow:
-        0 2px 4px 0 rgba(48, 35, 80, 0.04), 0 1px 2px 0 rgba(48, 35, 80, 0.06),
-        0 0 1px 0 rgba(48, 35, 80, 0.06);
+        0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+
       --overlay-shadow:
-        0 2px 8px 0 rgba(48, 35, 80, 0.04),
-        0 -4px 12px 0 rgba(48, 35, 80, 0.02),
-        0 14px 28px 0 rgba(48, 35, 80, 0.06);
-      --field-shadow:
-        0 1px 2px 0 rgba(48, 35, 80, 0.05), 0 0 1px 0 rgba(48, 35, 80, 0.05);
+        0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 8px 10px -1px rgba(0, 0, 0, 0.1);
+
+      --field-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     }
 
+    /* ============================================================
+       DARK
+       ============================================================ */
+
     @variant dark {
+      /* ==========================================================
+     TYPOGRAPHY
+     ========================================================== */
+
       --font-normal: "SpaceGrotesk_400Regular";
       --font-medium: "SpaceGrotesk_500Medium";
       --font-semibold: "SpaceGrotesk_600SemiBold";
       --font-bold: "SpaceGrotesk_700Bold";
+
+      /* ==========================================================
+     RADIUS
+     ========================================================== */
+
       --radius: 0.1rem;
 
-      --background: oklch(0.13 0.025 286);
-      --foreground: oklch(0.965 0.008 286);
-      --surface: oklch(0.18 0.03 286);
-      --surface-foreground: oklch(0.96 0.008 286);
-      --surface-secondary: oklch(0.22 0.035 286);
-      --surface-secondary-foreground: oklch(0.94 0.01 286);
-      --surface-tertiary: oklch(0.26 0.04 286);
-      --surface-tertiary-foreground: oklch(0.92 0.012 286);
-      --overlay: oklch(0.2 0.035 286);
-      --overlay-foreground: oklch(0.965 0.008 286);
+      /* ==========================================================
+     BASE
+     ========================================================== */
+
+      --background: oklch(0.235 0.004 106.6);
+      --foreground: oklch(0.8074 0.0142 93.0137);
+
+      /* ==========================================================
+     SURFACES
+     ========================================================== */
+
+      --surface: oklch(0.285 0.005 106.6);
+      --surface-foreground: oklch(0.9818 0.0054 95.0986);
+
+      --surface-secondary: oklch(0.32 0.006 106.6);
+      --surface-secondary-foreground: oklch(0.9211 0.004 106.4781);
+
+      --surface-tertiary: oklch(0.36 0.01 106.8);
+      --surface-tertiary-foreground: oklch(0.9211 0.004 106.4781);
+
+      /* ==========================================================
+     OVERLAY
+     ========================================================== */
+
+      --overlay: oklch(0.3085 0.0035 106.6039);
+      --overlay-foreground: oklch(0.9211 0.004 106.4781);
+
       --backdrop: oklch(0% 0 0 / 45%);
-      --muted: oklch(0.7 0.03 286);
-      --default: oklch(0.24 0.035 286);
-      --default-foreground: oklch(0.94 0.01 286);
-      --accent: oklch(0.4341 0.2462 286);
-      --accent-foreground: oklch(0.99 0 0);
-      --field-background: oklch(0.19 0.032 286);
-      --field-foreground: oklch(0.96 0.008 286);
-      --field-placeholder: oklch(0.64 0.028 286);
-      --field-border: oklch(0.3 0.04 286);
+
+      /* ==========================================================
+     MUTED
+     ========================================================== */
+
+      --muted: oklch(0.7713 0.0169 99.0657);
+
+      /* ==========================================================
+     DEFAULT
+     ========================================================== */
+
+      --default: oklch(0.213 0.0078 95.4245);
+      --default-foreground: oklch(0.9663 0.008 98.8792);
+
+      /* ==========================================================
+     ACCENT
+     ========================================================== */
+
+      --accent: oklch(0.6724 0.1308 38.7559);
+      --accent-foreground: oklch(1 0 0);
+
+      /* ==========================================================
+     FIELDS
+     ========================================================== */
+
+      --field-background: oklch(0.3085 0.0035 106.6039);
+      --field-foreground: oklch(0.9211 0.004 106.4781);
+      --field-placeholder: oklch(0.7713 0.0169 99.0657);
+      --field-border: oklch(0.4336 0.0113 100.2195);
+
+      /* ==========================================================
+     STATES
+     ========================================================== */
+
       --success: oklch(0.72 0.17 150);
       --success-foreground: oklch(0.16 0.035 150);
+
       --warning: oklch(0.82 0.15 82);
       --warning-foreground: oklch(0.22 0.055 82);
-      --danger: oklch(0.68 0.21 24);
-      --danger-foreground: oklch(0.99 0 0);
 
-      /* custom colors */
-      --color-app-background: oklch(0.16 0.025 286);
-      --color-accent-soft: oklch(0.28 0.09 286);
-      --color-success-soft: oklch(0.28 0.07 150);
-      --color-warning-soft: oklch(0.32 0.075 82);
-      --color-danger-soft: oklch(0.29 0.09 24);
+      --danger: oklch(0.6368 0.2078 25.3313);
+      --danger-foreground: oklch(1 0 0);
 
-      --segment: oklch(0.21 0.034 286);
-      --segment-foreground: oklch(0.95 0.01 286);
-      --border: oklch(0.3 0.04 286);
-      --separator: oklch(0.35 0.045 286);
-      --focus: var(--accent);
-      --link: oklch(0.74 0.14 278);
-      --surface-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.025) inset;
+      /* ==========================================================
+     SEGMENT
+     ========================================================== */
+
+      --segment: oklch(0.2357 0.0024 67.7077);
+      --segment-foreground: oklch(0.8074 0.0142 93.0137);
+
+      /* ==========================================================
+     BORDERS
+     ========================================================== */
+
+      --border: oklch(0.39 0.01 106.8);
+      --separator: oklch(0.4336 0.0113 100.2195);
+
+      /* ==========================================================
+     FOCUS / LINKS
+     ========================================================== */
+
+      --focus: oklch(0.6724 0.1308 38.7559);
+      --link: oklch(0.6724 0.1308 38.7559);
+
+      /* ==========================================================
+     CUSTOM APP COLORS
+     ========================================================== */
+
+      --color-app-background: oklch(0.235 0.004 106.6);
+
+      --color-card-depth: oklch(0.38 0.055 45);
+
+      --color-accent-depth: oklch(0.52 0.14 39);
+
+      --color-success-depth: oklch(0.5 0.14 150);
+
+      --color-danger-depth: oklch(0.5 0.16 25);
+
+      --color-accent-soft: oklch(0.6724 0.1308 38.7559 / 0.16);
+
+      --color-success-soft: oklch(0.72 0.17 150 / 0.14);
+
+      --color-warning-soft: oklch(0.82 0.15 82 / 0.14);
+
+      --color-danger-soft: oklch(0.6368 0.2078 25.3313 / 0.16);
+
+      /* ==========================================================
+     CHARTS
+     IMPORTANT : mêmes variables que LIGHT
+     ========================================================== */
+
+      --color-chart-1: oklch(0.5583 0.1276 42.9956);
+      --color-chart-2: oklch(0.6898 0.1581 290.4107);
+      --color-chart-3: oklch(0.213 0.0078 95.4245);
+      --color-chart-4: oklch(0.3074 0.0516 289.323);
+      --color-chart-5: oklch(0.5608 0.1348 42.0584);
+
+      /* ==========================================================
+     SIDEBAR
+     IMPORTANT : mêmes variables que LIGHT
+     ========================================================== */
+
+      --color-sidebar: oklch(0.2357 0.0024 67.7077);
+
+      --color-sidebar-foreground: oklch(0.8074 0.0142 93.0137);
+
+      --color-sidebar-primary: oklch(0.6724 0.1308 38.7559);
+
+      --color-sidebar-primary-foreground: oklch(1 0 0);
+
+      --color-sidebar-accent: oklch(0.3085 0.0035 106.6039);
+
+      --color-sidebar-accent-foreground: oklch(0.9211 0.004 106.4781);
+
+      --color-sidebar-border: oklch(0.39 0.01 106.8);
+
+      /* ==========================================================
+     SHADOWS
+     ========================================================== */
+
+      --surface-shadow:
+        0 1px 0 0 rgba(255, 255, 255, 0.035) inset,
+        0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 18px 0 rgba(0, 0, 0, 0.22),
+        0 2px 6px 0 rgba(0, 0, 0, 0.18);
+
       --overlay-shadow:
-        0 0 1px 0 rgba(255, 255, 255, 0.2) inset,
-        0 18px 40px 0 rgba(0, 0, 0, 0.28);
-      --field-shadow: 0 0 0 1px rgba(255, 255, 255, 0.018) inset;
+        0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+        0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 32px 0 rgba(0, 0, 0, 0.32);
+
+      --field-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.16);
     }
   }
 }

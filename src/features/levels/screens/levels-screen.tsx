@@ -1,12 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { Card } from "heroui-native/card";
 import { useRef, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
@@ -14,6 +12,7 @@ import {
 } from "react-native";
 
 import { EmptyCard, ErrorCard, LoadingCard } from "@/components/query-feedback";
+import { ThreeDCard } from "@/components/ui/three-d-card";
 import { useLevels } from "@/features/levels/hooks/use-levels";
 import type { Level } from "@/features/levels/types/level";
 
@@ -194,100 +193,76 @@ export function LevelsScreen() {
         </View>
       ) : data?.length && selectedLevel ? (
         <>
-          {/* ============================== */}
-          {/* STATS 3D */}
-          {/* ============================== */}
-
+          {/* STATISTIQUES */}
           <View className="px-4">
-            <View
-              style={{
-                position: "relative",
-                paddingBottom: 5,
-              }}
-            >
-              {/* PROFONDEUR */}
-              <View
-                className="absolute inset-x-0 top-[5px] h-full bg-surface-secondary"
-                style={{
-                  borderRadius: CARD_RADIUS,
-                }}
-              />
+            <ThreeDCard className="border border-border bg-surface p-3">
+              <View className="flex-row items-center">
+                {/* CHAPITRES */}
 
-              {/* FACE */}
-              <Card
-                className="p-3"
-                style={{
-                  borderRadius: CARD_RADIUS,
-                }}
-              >
-                <View className="flex-row items-center">
-                  {/* CHAPITRES */}
+                <View className="flex-1 items-center gap-1">
+                  <Text
+                    className="text-[9px] font-bold uppercase tracking-wider text-muted"
+                    numberOfLines={1}
+                  >
+                    Chapitres
+                  </Text>
 
-                  <View className="flex-1 items-center gap-1">
-                    <Text
-                      className="text-[9px] font-bold uppercase tracking-wider text-muted"
-                      numberOfLines={1}
-                    >
-                      Chapitres
-                    </Text>
+                  <Text className="text-xl font-bold text-foreground">
+                    {selectedLevel.completed_chapters_count ?? "—"}
 
-                    <Text className="text-xl font-bold text-foreground">
-                      {selectedLevel.completed_chapters_count ?? "—"}
-
-                      {selectedLevel.chapters_count !== undefined ? (
-                        <Text className="text-xs font-medium text-muted">
-                          /{selectedLevel.chapters_count}
-                        </Text>
-                      ) : null}
-                    </Text>
-
-                    <Text className="text-[9px] text-muted">terminés</Text>
-                  </View>
-
-                  <View className="h-10 w-px bg-separator" />
-
-                  {/* LEÇONS */}
-
-                  <View className="flex-1 items-center gap-1">
-                    <Text
-                      className="text-[9px] font-bold uppercase tracking-wider text-muted"
-                      numberOfLines={1}
-                    >
-                      Leçons
-                    </Text>
-
-                    <Text className="text-xl font-bold text-foreground">
-                      {selectedLevel.completed_lessons_count}
-
+                    {selectedLevel.chapters_count !== undefined ? (
                       <Text className="text-xs font-medium text-muted">
-                        /{selectedLevel.lessons_count}
+                        /{selectedLevel.chapters_count}
                       </Text>
-                    </Text>
+                    ) : null}
+                  </Text>
 
-                    <Text className="text-[9px] text-muted">terminées</Text>
-                  </View>
-
-                  <View className="h-10 w-px bg-separator" />
-
-                  {/* PROGRESSION */}
-
-                  <View className="flex-1 items-center gap-1">
-                    <Text
-                      className="text-[9px] font-bold uppercase tracking-wider text-muted"
-                      numberOfLines={1}
-                    >
-                      Progression
-                    </Text>
-
-                    <Text className="text-xl font-bold text-accent">
-                      {selectedLevel.progress}%
-                    </Text>
-
-                    <Text className="text-[9px] text-muted">du niveau</Text>
-                  </View>
+                  <Text className="text-[9px] text-muted">terminés</Text>
                 </View>
-              </Card>
-            </View>
+
+                <View className="h-10 w-px bg-separator" />
+
+                {/* LEÇONS */}
+
+                <View className="flex-1 items-center gap-1">
+                  <Text
+                    className="text-[9px] font-bold uppercase tracking-wider text-muted"
+                    numberOfLines={1}
+                  >
+                    Leçons
+                  </Text>
+
+                  <Text className="text-xl font-bold text-foreground">
+                    {selectedLevel.completed_lessons_count}
+
+                    <Text className="text-xs font-medium text-muted">
+                      /{selectedLevel.lessons_count}
+                    </Text>
+                  </Text>
+
+                  <Text className="text-[9px] text-muted">terminées</Text>
+                </View>
+
+                <View className="h-10 w-px bg-separator" />
+
+                {/* PROGRESSION */}
+
+                <View className="flex-1 items-center gap-1">
+                  <Text
+                    className="text-[9px] font-bold uppercase tracking-wider text-muted"
+                    numberOfLines={1}
+                  >
+                    Progression
+                  </Text>
+
+                  <Text className="text-xl font-bold text-accent">
+                    {selectedLevel.progress}%
+                  </Text>
+
+                  <Text className="text-[9px] text-muted">du niveau</Text>
+                </View>
+              </View>
+            </ThreeDCard>
           </View>
 
           {/* ============================== */}
@@ -346,222 +321,127 @@ export function LevelsScreen() {
                 const isInProgress = level.status === "in_progress";
 
                 return (
-                  <Pressable
+                  <ThreeDCard
                     key={level.code}
                     onPress={() => openLevel(level)}
+                    className="overflow-hidden p-0"
                     style={{
                       width: cardWidth,
-                      height: cardHeight + CARD_DEPTH,
+                      height: 310,
+                    }}
+                    containerStyle={{
+                      width: cardWidth,
                     }}
                   >
-                    {({ pressed }) => (
-                      <View
-                        style={{
-                          width: cardWidth,
-                          height: cardHeight + CARD_DEPTH,
-                          position: "relative",
-                        }}
-                      >
-                        {/* ============================== */}
-                        {/* PROFONDEUR */}
-                        {/* ============================== */}
+                    <LinearGradient
+                      colors={meta.colors}
+                      start={{
+                        x: 0,
+                        y: 0,
+                      }}
+                      end={{
+                        x: 1,
+                        y: 1,
+                      }}
+                      style={{
+                        flex: 1,
+                      }}
+                    >
+                      {/* DECOR */}
 
-                        <View
-                          pointerEvents="none"
-                          style={{
-                            position: "absolute",
+                      <View className="absolute -right-16 -top-20 size-56 rounded-full bg-white/5" />
 
-                            left: 0,
-                            right: 0,
+                      <View className="absolute -bottom-24 -left-12 size-52 rounded-full border border-white/10" />
 
-                            top: CARD_DEPTH,
+                      <View className="absolute right-10 top-20 size-20 rounded-full border border-white/5" />
 
-                            height: cardHeight,
+                      <View className="flex-1 justify-between p-5">
+                        {/* CARD TOP */}
 
-                            borderRadius: CARD_RADIUS,
+                        <View className="flex-row items-start justify-between">
+                          <View className="size-12 items-center justify-center rounded-2xl bg-white/10">
+                            <Ionicons
+                              name={meta.icon}
+                              size={25}
+                              color="white"
+                            />
+                          </View>
 
-                            backgroundColor: meta.depth,
-                          }}
-                        />
+                          <View className="items-end gap-2">
+                            {isCompleted ? (
+                              <View className="flex-row items-center gap-1.5">
+                                <Ionicons
+                                  name="checkmark-circle"
+                                  size={16}
+                                  color="white"
+                                />
 
-                        {/* ============================== */}
-                        {/* FACE */}
-                        {/* ============================== */}
-
-                        <Card
-                          className="absolute inset-x-0 top-0 overflow-hidden p-0"
-                          style={{
-                            width: cardWidth,
-
-                            height: cardHeight,
-
-                            borderRadius: CARD_RADIUS,
-
-                            transform: [
-                              {
-                                translateY: pressed ? CARD_PRESS_DEPTH : 0,
-                              },
-                            ],
-                          }}
-                        >
-                          <LinearGradient
-                            colors={meta.colors}
-                            start={{
-                              x: 0,
-                              y: 0,
-                            }}
-                            end={{
-                              x: 1,
-                              y: 1,
-                            }}
-                            style={{
-                              flex: 1,
-                            }}
-                          >
-                            {/* DECOR */}
-
-                            <View className="absolute -right-16 -top-20 size-56 rounded-full bg-white/5" />
-
-                            <View className="absolute -bottom-24 -left-12 size-52 rounded-full border border-white/10" />
-
-                            <View className="absolute right-10 top-20 size-20 rounded-full border border-white/5" />
-
-                            <View className="flex-1 justify-between p-5">
-                              {/* ============================== */}
-                              {/* TOP */}
-                              {/* ============================== */}
-
-                              <View className="flex-row items-start justify-between">
-                                {/* ICON 3D */}
-
-                                <View
-                                  style={{
-                                    position: "relative",
-
-                                    paddingBottom: 3,
-                                  }}
-                                >
-                                  <View
-                                    className="absolute inset-x-0 top-[3px] h-full bg-black/20"
-                                    style={{
-                                      borderRadius: CARD_RADIUS,
-                                    }}
-                                  />
-
-                                  <View
-                                    className="size-12 items-center justify-center bg-white/10"
-                                    style={{
-                                      borderRadius: CARD_RADIUS,
-                                    }}
-                                  >
-                                    <Ionicons
-                                      name={meta.icon}
-                                      size={25}
-                                      color="white"
-                                    />
-                                  </View>
-                                </View>
-
-                                <View className="items-end gap-2">
-                                  {isCompleted ? (
-                                    <View className="flex-row items-center gap-1.5">
-                                      <Ionicons
-                                        name="checkmark-circle"
-                                        size={16}
-                                        color="white"
-                                      />
-
-                                      <Text className="text-[10px] font-bold tracking-wider text-white/80">
-                                        TERMINÉ
-                                      </Text>
-                                    </View>
-                                  ) : isInProgress ? (
-                                    <View className="flex-row items-center gap-1.5">
-                                      <View className="size-1.5 rounded-full bg-white" />
-
-                                      <Text className="text-[10px] font-bold tracking-wider text-white/80">
-                                        EN COURS
-                                      </Text>
-                                    </View>
-                                  ) : null}
-
-                                  {/* ARROW BLOCK */}
-
-                                  <View
-                                    className="size-8 items-center justify-center bg-white/10"
-                                    style={{
-                                      borderRadius: CARD_RADIUS,
-                                    }}
-                                  >
-                                    <Ionicons
-                                      name="arrow-forward"
-                                      size={17}
-                                      color="rgba(255,255,255,0.75)"
-                                    />
-                                  </View>
-                                </View>
-                              </View>
-
-                              {/* ============================== */}
-                              {/* LEVEL */}
-                              {/* ============================== */}
-
-                              <View className="items-center">
-                                <Text className="text-[10px] font-bold tracking-[3px] text-white/55">
-                                  {meta.rank}
-                                </Text>
-
-                                <Text className="mt-1 text-[72px] font-bold leading-[78px] tracking-tight text-white">
-                                  {level.code}
-                                </Text>
-
-                                <Text className="text-base font-semibold text-white/70">
-                                  {meta.name}
+                                <Text className="text-[10px] font-bold tracking-wider text-white/80">
+                                  TERMINÉ
                                 </Text>
                               </View>
+                            ) : isInProgress ? (
+                              <View className="flex-row items-center gap-1.5">
+                                <View className="size-1.5 rounded-full bg-white" />
 
-                              {/* ============================== */}
-                              {/* PROGRESS */}
-                              {/* ============================== */}
-
-                              <View className="gap-2">
-                                <View className="flex-row items-center justify-between">
-                                  <Text className="text-xs font-medium text-white/60">
-                                    Progression
-                                  </Text>
-
-                                  <Text className="text-xs font-bold text-white">
-                                    {level.progress}%
-                                  </Text>
-                                </View>
-
-                                {/* TRACK ENCASTRÉ */}
-
-                                <View
-                                  className="h-2 overflow-hidden bg-black/20"
-                                  style={{
-                                    borderRadius: CARD_RADIUS,
-                                  }}
-                                >
-                                  <View
-                                    className="h-full bg-white"
-                                    style={{
-                                      width: `${Math.min(
-                                        Math.max(level.progress, 0),
-                                        100,
-                                      )}%`,
-
-                                      borderRadius: CARD_RADIUS,
-                                    }}
-                                  />
-                                </View>
+                                <Text className="text-[10px] font-bold tracking-wider text-white/80">
+                                  EN COURS
+                                </Text>
                               </View>
-                            </View>
-                          </LinearGradient>
-                        </Card>
+                            ) : null}
+
+                            <Ionicons
+                              name="arrow-forward"
+                              size={18}
+                              color="rgba(255,255,255,0.55)"
+                            />
+                          </View>
+                        </View>
+
+                        {/* LEVEL */}
+
+                        <View className="items-center">
+                          <Text className="text-[10px] font-bold tracking-[3px] text-white/55">
+                            {meta.rank}
+                          </Text>
+
+                          <Text className="mt-1 text-[72px] font-bold leading-[78px] tracking-tight text-white">
+                            {level.code}
+                          </Text>
+
+                          <Text className="text-base font-semibold text-white/70">
+                            {meta.name}
+                          </Text>
+                        </View>
+
+                        {/* PROGRESS */}
+
+                        <View className="gap-2">
+                          <View className="flex-row items-center justify-between">
+                            <Text className="text-xs font-medium text-white/60">
+                              Progression
+                            </Text>
+
+                            <Text className="text-xs font-bold text-white">
+                              {level.progress}%
+                            </Text>
+                          </View>
+
+                          <View className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                            <View
+                              className="h-full rounded-full bg-white"
+                              style={{
+                                width: `${Math.min(
+                                  Math.max(level.progress, 0),
+                                  100,
+                                )}%`,
+                              }}
+                            />
+                          </View>
+                        </View>
                       </View>
-                    )}
-                  </Pressable>
+                    </LinearGradient>
+                  </ThreeDCard>
                 );
               })}
             </ScrollView>

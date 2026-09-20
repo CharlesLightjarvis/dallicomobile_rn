@@ -38,7 +38,7 @@ export function HomeScreen() {
               Reprends le parcours A1 avec les bases de l’allemand.
             </Card.Description>
           </View>
-          <Button onPress={() => router.navigate("/(tabs)/learn")}>
+          <Button onPress={() => router.navigate("/(tabs)/(learn)")}>
             Continuer
           </Button>
         </Card.Body>

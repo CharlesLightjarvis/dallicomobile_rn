@@ -24,7 +24,24 @@ import { Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
-const heroUIConfig = { devInfo: { stylingPrinciples: false } } as const;
+const heroUIConfig = {
+  devInfo: {
+    stylingPrinciples: false,
+    toast: {
+      defaultProps: {
+        placement: "top",
+        isSwipeable: true,
+      },
+
+      insets: {
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      },
+    },
+  },
+} as const;
 
 function AppNavigator() {
   const { user, isReady } = useAuth();

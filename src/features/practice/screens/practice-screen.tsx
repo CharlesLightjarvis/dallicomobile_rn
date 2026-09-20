@@ -1,13 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { Card } from "heroui-native/card";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
-const CARD_RADIUS = 2;
-const CARD_DEPTH = 6;
-const CARD_PRESS_DEPTH = 3;
-const CARD_HEIGHT = 192; // h-48
+import { ThreeDCard } from "@/components/ui/three-d-card";
 
 const PRACTICE_ITEMS = [
   {
@@ -86,132 +82,96 @@ export function PracticeScreen() {
       {/* PRACTICE GRID */}
       <View className="flex-row flex-wrap gap-3">
         {PRACTICE_ITEMS.map((item, index) => (
-          <Pressable
-            key={item.id}
-            className="w-[48%]"
-            disabled={!item.enabled}
-            onPress={() => handlePress(item.id)}
-            style={{
-              height: CARD_HEIGHT + CARD_DEPTH,
-              opacity: item.enabled ? 1 : 0.68,
-            }}
-          >
-            {({ pressed }) => (
-              <View
+          <View key={item.id} className="w-[48%]">
+            <ThreeDCard
+              onPress={() => handlePress(item.id)}
+              disabled={!item.enabled}
+              disabledOpacity={0.35}
+              depth={6}
+              pressDepth={3}
+              radius={2}
+              containerClassName="w-full"
+              className="h-48 w-full overflow-hidden p-0"
+            >
+              <LinearGradient
+                colors={item.colors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={{
-                  position: "relative",
-                  height: CARD_HEIGHT + CARD_DEPTH,
+                  flex: 1,
                 }}
               >
-                {/* PROFONDEUR 3D */}
-                <View
-                  pointerEvents="none"
-                  style={{
-                    position: "absolute",
-                    top: CARD_DEPTH,
-                    left: 0,
-                    right: 0,
-                    height: CARD_HEIGHT,
+                {/* DECOR */}
+                <View className="absolute -right-10 -top-12 size-28 rounded-full border border-white/10" />
 
-                    borderRadius: CARD_RADIUS,
+                <View className="absolute -bottom-10 -left-8 size-24 rounded-full bg-white/5" />
 
-                    backgroundColor: item.depth,
-                  }}
-                />
-
-                {/* FACE */}
-                <Card
-                  className="absolute inset-x-0 top-0 h-48 w-full overflow-hidden p-0"
-                  style={{
-                    borderRadius: CARD_RADIUS,
-
-                    transform: [
-                      {
-                        translateY:
-                          pressed && item.enabled ? CARD_PRESS_DEPTH : 0,
-                      },
-                    ],
-                  }}
-                >
-                  <LinearGradient
-                    colors={item.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{ flex: 1 }}
-                  >
-                    {/* DECOR */}
-                    <View className="absolute -right-10 -top-12 size-28 rounded-full border border-white/10" />
-
-                    <View className="absolute -bottom-10 -left-8 size-24 rounded-full bg-white/5" />
-
-                    <View className="flex-1 justify-between p-3">
-                      {/* TOP */}
-                      <View className="flex-row items-start justify-between">
-                        <View className="size-10 items-center justify-center rounded-xl bg-white/10">
-                          <Ionicons name={item.icon} size={21} color="white" />
-                        </View>
-
-                        {item.enabled ? (
-                          <View className="size-8 items-center justify-center rounded-full bg-white">
-                            <Ionicons
-                              name="arrow-forward"
-                              size={15}
-                              color="#171717"
-                            />
-                          </View>
-                        ) : (
-                          <View className="rounded-full bg-white/10 px-2 py-1">
-                            <Text className="text-[8px] font-bold tracking-wider text-white/65">
-                              BIENTÔT
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-
-                      {/* IDENTITY */}
-                      <View className="gap-1">
-                        <View className="flex-row items-center gap-2">
-                          <Text className="text-[9px] font-bold tracking-[1.5px] text-white/45">
-                            {String(index + 1).padStart(2, "0")}
-                          </Text>
-
-                          <Text className="text-[9px] font-bold tracking-[1.5px] text-white/55">
-                            {item.kicker}
-                          </Text>
-                        </View>
-
-                        <Text
-                          className="text-lg font-bold leading-6 text-white"
-                          numberOfLines={1}
-                        >
-                          {item.title}
-                        </Text>
-
-                        <Text
-                          className="text-xs leading-4 text-white/65"
-                          numberOfLines={2}
-                        >
-                          {item.description}
-                        </Text>
-                      </View>
-
-                      {/* BOTTOM */}
-                      <View className="gap-2">
-                        <View className="h-px bg-white/10" />
-
-                        <Text
-                          className="text-[9px] font-semibold text-white/45"
-                          numberOfLines={1}
-                        >
-                          {item.modes}
-                        </Text>
-                      </View>
+                <View className="flex-1 justify-between p-3">
+                  {/* TOP */}
+                  <View className="flex-row items-start justify-between">
+                    <View className="size-10 items-center justify-center rounded-xl bg-white/10">
+                      <Ionicons name={item.icon} size={21} color="white" />
                     </View>
-                  </LinearGradient>
-                </Card>
-              </View>
-            )}
-          </Pressable>
+
+                    {item.enabled ? (
+                      <View className="size-8 items-center justify-center rounded-full bg-white">
+                        <Ionicons
+                          name="arrow-forward"
+                          size={15}
+                          color="#171717"
+                        />
+                      </View>
+                    ) : (
+                      <View className="rounded-full bg-white/10 px-2 py-1">
+                        <Text className="text-[8px] font-bold tracking-wider text-white/65">
+                          BIENTÔT
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* IDENTITY */}
+                  <View className="gap-1">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-[9px] font-bold tracking-[1.5px] text-white/45">
+                        {String(index + 1).padStart(2, "0")}
+                      </Text>
+
+                      <Text className="text-[9px] font-bold tracking-[1.5px] text-white/55">
+                        {item.kicker}
+                      </Text>
+                    </View>
+
+                    <Text
+                      className="text-lg font-bold leading-6 text-white"
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+
+                    <Text
+                      className="text-xs leading-4 text-white/65"
+                      numberOfLines={2}
+                    >
+                      {item.description}
+                    </Text>
+                  </View>
+
+                  {/* BOTTOM */}
+                  <View className="gap-2">
+                    <View className="h-px bg-white/10" />
+
+                    <Text
+                      className="text-[9px] font-semibold text-white/45"
+                      numberOfLines={1}
+                    >
+                      {item.modes}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </ThreeDCard>
+          </View>
         ))}
       </View>
     </ScrollView>
