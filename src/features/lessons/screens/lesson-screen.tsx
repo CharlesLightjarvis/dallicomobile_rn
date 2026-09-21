@@ -7,7 +7,6 @@ import { ErrorCard, LoadingCard } from "@/components/query-feedback";
 import { GameButton } from "@/components/ui/game-button";
 
 import { LessonMarkdown } from "@/features/lessons/components/lesson-markdown";
-import { LessonQuizSheet } from "@/features/lessons/components/lesson-quiz-sheet";
 
 import { useStartLesson } from "@/features/lessons/hooks/use-lesson-progress";
 import { useLesson } from "@/features/lessons/hooks/use-lessons";
@@ -22,7 +21,6 @@ export function LessonScreen() {
   const { mutate: startLesson } = useStartLesson();
 
   const [isRead, setIsRead] = useState(false);
-  const [showQuiz, setShowQuiz] = useState(false);
 
   useEffect(() => {
     if (lesson) {
@@ -49,12 +47,12 @@ export function LessonScreen() {
     );
   }
 
-  const returnToLessons = () => {
-    router.dismissTo({
-      pathname: "/learn/chapters/[chapter]",
+  const handleQuiz = () => {
+    router.push({
+      pathname: "/learn/quiz/[lesson]",
       params: {
-        chapter: data.chapter.slug,
-        title: data.chapter.title,
+        lesson: data.slug,
+        title: data.title,
       },
     });
   };
@@ -67,10 +65,6 @@ export function LessonScreen() {
      * brancher ici la mutation backend
      * lu / non lu.
      */
-  };
-
-  const handleQuiz = () => {
-    setShowQuiz(true);
   };
 
   return (
@@ -127,16 +121,6 @@ export function LessonScreen() {
         </View>
       </SafeAreaView>
 
-      {/* ================================= */}
-      {/* QUIZ */}
-      {/* ================================= */}
-
-      <LessonQuizSheet
-        lesson={data}
-        isOpen={showQuiz}
-        onOpenChange={setShowQuiz}
-        onFinished={returnToLessons}
-      />
     </View>
   );
 }

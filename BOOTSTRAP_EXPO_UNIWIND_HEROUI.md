@@ -191,10 +191,10 @@ Si une variable est définie dans une variante, Uniwind exige qu'elle existe dan
 
 Dans Dallico :
 
-| Thème | Rayon |
-| --- | --- |
-| `light`, `dark` | `0.5rem` |
-| `sky-light`, `sky-dark` | `0.1rem` |
+| Thème                       | Rayon    |
+| --------------------------- | -------- |
+| `light`, `dark`             | `0.5rem` |
+| `sky-light`, `sky-dark`     | `0.1rem` |
 | `ocean-light`, `ocean-dark` | `0.5rem` |
 
 Une police différente peut être utilisée par thème. Il faut charger ses quatre fichiers dans le layout et remplacer les quatre noms dans chaque variante concernée. Toutes les variantes doivent néanmoins conserver les mêmes noms de variables.
@@ -293,15 +293,13 @@ import { Text, View } from "react-native";
 export function Example() {
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-background px-6">
-      <Text className="text-3xl font-semibold text-foreground">
-        Bonjour
-      </Text>
+      <Text className="text-3xl font-semibold text-foreground">Bonjour</Text>
 
       <Text className="text-base text-muted">
         Interface basée sur les tokens sémantiques HeroUI.
       </Text>
 
-      <Button className="w-full" onPress={() => console.log("Pressed") }>
+      <Button className="w-full" onPress={() => console.log("Pressed")}>
         Continuer
       </Button>
     </View>
@@ -550,3 +548,50 @@ bunx expo start --clear
 - React Native Appearance : https://reactnative.dev/docs/appearance
 - Issue Expo Router NativeTabs iOS #40389 : https://github.com/expo/expo/issues/40389
 - Discussion Expo NativeTabs dark mode : https://www.reddit.com/r/expo/comments/1pa82y2/nativetabs_dark_mode_issue/
+
+bien organiser les dossiers dans features
+
+src/
+└── features/
+├── auth/
+├── home/
+├── learn/
+│ ├── components/
+│ │ ├── level-overview-card.tsx
+│ │ ├── chapter-overview-card.tsx
+│ │ ├── lesson-overview-card.tsx
+│ │ ├── lesson-markdown.tsx
+│ │ └── lesson-quiz-sheet.tsx
+│ │
+│ ├── hooks/
+│ │ ├── use-levels.ts
+│ │ ├── use-chapters.ts
+│ │ ├── use-lessons.ts
+│ │ └── use-lesson-progress.ts
+│ │
+│ ├── screens/
+│ │ ├── learn-screen.tsx
+│ │ ├── level-screen.tsx
+│ │ ├── chapters-screen.tsx
+│ │ ├── lessons-screen.tsx
+│ │ └── lesson-screen.tsx
+│ │
+│ ├── services/
+│ │ ├── levels-service.ts
+│ │ ├── chapters-service.ts
+│ │ └── lessons-service.ts
+│ │
+│ ├── types/
+│ │ ├── level.ts
+│ │ ├── chapter.ts
+│ │ └── lesson.ts
+│ │
+│ └── index.ts
+│
+├── practice/
+└── profile/
+
+modifier le statusbar qui reste avec un background noir en light mode et rien saffiche pourtant dark mode tout marche super bien
+
+le backend doit renvoyer le score (pourcentage)
+les appréciations doivent tils etre coté back ou front selon le pourcentage du score ?
