@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.charleslightjarvis.dallico"
     },
     "web": {
       "output": "static",
@@ -33,6 +34,7 @@
           "imageWidth": 76
         }
       ],
+      "expo-system-ui",
       "expo-secure-store"
     ],
     "experiments": {

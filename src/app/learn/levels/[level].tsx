@@ -1,3 +1,3 @@
-import { ChaptersScreen } from "@/features/chapters/screens/chapters-screen";
+import { ChaptersScreen } from "@/features/learn/chapters/screens/chapters-screen";
 
 export default ChaptersScreen;

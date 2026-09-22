@@ -1,3 +1,3 @@
-import { LessonsScreen } from "@/features/lessons/screens/lessons-screen";
+import { LessonsScreen } from "@/features/learn/lessons/screens/lessons-screen";
 
 export default LessonsScreen;

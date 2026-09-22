@@ -1,4 +1,4 @@
-import type { Level } from "@/features/levels/types/level";
+import type { Level } from "@/features/learn/levels/types/level";
 
 export type ProgressStatus = "available" | "in_progress" | "completed";
 

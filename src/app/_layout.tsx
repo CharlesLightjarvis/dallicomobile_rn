@@ -8,7 +8,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useThemeColor } from "heroui-native/hooks";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -19,7 +18,6 @@ import "../global.css";
 import { queryClient } from "@/config/query-client";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { AuthProvider } from "@/features/auth/providers/auth-provider";
-import { StatusBar } from "expo-status-bar";
 import { Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
@@ -56,7 +54,6 @@ function AppNavigator() {
 
   return (
     <ThemeProvider value={navigationTheme}>
-      <StatusBar animated style={theme === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerLargeTitleEnabled: false,
@@ -152,7 +149,6 @@ function AppNavigator() {
 }
 
 export default function RootLayout() {
-  const [backgroundColor] = useThemeColor(["background"]);
   const [fontsLoaded, fontError] = useFonts({
     SpaceGrotesk_400Regular,
     SpaceGrotesk_500Medium,
@@ -167,7 +163,7 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <HeroUINativeProvider config={heroUIConfig}>
           <AuthProvider>

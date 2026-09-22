@@ -1,3 +1,3 @@
-import { QuizSuccessScreen } from "@/features/lessons/screens/quiz-success-screen";
+import { QuizSuccessScreen } from "@/features/learn/lessons/screens/quiz-success-screen";
 
 export default QuizSuccessScreen;
