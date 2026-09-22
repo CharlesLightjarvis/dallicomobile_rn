@@ -1,8 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router, Stack } from "expo-router";
+import { router, Stack, useFocusEffect } from "expo-router";
 import { BottomSheet } from "heroui-native/bottom-sheet";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
+  BackHandler,
   Image,
   Pressable,
   Text,
@@ -258,6 +259,23 @@ export function LessonQuizPage({ lesson, onFinished }: LessonQuizPageProps) {
    * SHEET DE SORTIE
    */
   const [showExitSheet, setShowExitSheet] = useState(false);
+
+  /* =======================================================
+   * ANDROID HARDWARE BACK
+   * Empêche le bouton Retour Android de quitter la page quiz.
+   * La sortie reste uniquement contrôlée par la croix + BottomSheet.
+   * ===================================================== */
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => true,
+      );
+
+      return () => subscription.remove();
+    }, []),
+  );
 
   /* =======================================================
    * API
@@ -723,18 +741,6 @@ export function LessonQuizPage({ lesson, onFinished }: LessonQuizPageProps) {
               intensity: 35,
             }}
           />
-
-          {/*
-           * IMPORTANT :
-           *
-           * Pas de snapPoints.
-           * Pas de h-full.
-           * Pas de hauteur forcée.
-           *
-           * HeroUI mesure le contenu
-           * et fait monter le sheet
-           * à la bonne hauteur.
-           */}
 
           <BottomSheet.Content backgroundClassName="bg-app-background">
             <View

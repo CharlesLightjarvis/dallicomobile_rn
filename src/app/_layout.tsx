@@ -122,6 +122,14 @@ function AppNavigator() {
           />
 
           <Stack.Screen
+            name="learn/quiz/[lesson]"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+
+          <Stack.Screen
             name="practice/vocabulary/index"
             options={{
               title: "Vocabulaire",
