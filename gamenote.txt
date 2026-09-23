@@ -1,0 +1,171 @@
+Oui chef, l’idée tient vraiment bien. Le cœur est simple à comprendre : mot → buzz → traduction → bonus grammaticaux, avec élimination progressive des volets. Et oui, ça fonctionne jusqu’à 4 joueurs. Mais il y a quelques failles à verrouiller avant de coder, sinon elles vont ressortir immédiatement pendant les parties.
+
+Le point le plus important est de séparer deux chronos : le chrono de la question et le chrono du joueur. Le chrono général, par exemple 60 s, tourne uniquement quand personne n’a la main. Dès qu’un joueur buzz, il se fige et un chrono personnel de 15 s démarre. S’il rate, son buzz est consommé pour ce mot, le chrono général reprend et les autres peuvent buzzer. À 4 joueurs, ça donne naturellement J1 rate → J2/J3/J4 restent actifs. Si tout le monde a raté ou si le chrono général arrive à zéro, on révèle la fiche complète.
+
+Le flow exact que je figerais serait :
+
+Mot affiché, par exemple bestellen. J1, J2, J3 et J4 voient chacun leur buzzer. Chacun ne peut buzzer qu’une fois sur ce mot.
+Premier buzz reçu → tous les autres buzzers se verrouillent temporairement, chrono général en pause, joueur actif = 15 s.
+Traduction fausse → 0 point, joueur éliminé pour ce mot, chrono général reprend, autres joueurs peuvent buzzer. Traduction correcte → +1 garanti, les autres ne peuvent plus voler cette question, et ce joueur poursuit seul les volets.
+Volet 1 correct → +1 et accès au suivant. Volet 1 faux → STOP, il conserve uniquement ce qu’il avait déjà gagné.
+Volet 2 correct → +1. Faux → aucun retrait. Puis correction complète affichée quelques secondes et mot suivant.
+
+Il y a par contre une vraie faille de scoring dans ta version actuelle : bestellen, verbe faible, peut donner seulement 2 points alors que Tisch peut en donner 3, et un verbe fort peut aussi donner 3. Sur 20 questions, quelqu’un pourrait donc tomber sur des mots intrinsèquement plus rentables. Je ferais toujours 3 points maximum par mot, quelle que soit sa catégorie.
+
+Par exemple :
+
+NOM
+Tisch
+
+1. traduction → table                     +1
+2. article → der                         +1
+3. pluriel → die Tische                  +1
+VERBE
+fahren
+
+1. traduction → conduire / aller          +1
+2. fort ou faible → fort                  +1
+3. du fährst / er fährt                   +1
+
+Et pour un verbe faible :
+
+VERBE
+bestellen
+
+1. traduction → commander                 +1
+2. fort ou faible → faible                +1
+3. du bestellst / er bestellt             +1
+
+Même si la conjugaison faible est régulière, ça reste une vérification utile et surtout tous les mots valent 3 points.
+
+Autre faille importante : les traductions. Si tu imposes exactement "commander" et qu’un joueur écrit "passer commande", il ne faudrait pas le déclarer faux. Même problème avec fahren = conduire / aller / se déplacer selon le contexte. Il faudra que chaque entrée vocabulaire possède plusieurs réponses acceptées :
+
+{
+  word: "bestellen",
+  acceptedTranslations: [
+    "commander",
+    "passer commande"
+  ]
+}
+
+Même chose pour les fautes légères. Je tolérerais éventuellement accents/majuscules/espaces, mais pas une faute qui transforme réellement le mot.
+
+Pour le buzz à 4 joueurs, il faut aussi gérer la simultanéité. Il ne faut jamais que le téléphone décide localement qui a buzzé en premier si c’est multijoueur réseau. Le serveur doit recevoir :
+
+J3 buzz
+J1 buzz
+J4 buzz
+
+et désigner atomiquement le premier accepté. Tous les appareils reçoivent ensuite :
+
+🔒 J3 a la main
+
+Sinon tu auras le classique : J1 voit qu’il a gagné le buzz alors que J3 voit la même chose sur son téléphone.
+
+Je conserverais aussi les volets exclusivement au joueur qui a trouvé la traduction. Pas de vol du pluriel ou de la conjugaison. C’est beaucoup plus clair :
+
+Traduction = conquérir la question
+Volets = maximiser ses points
+
+Donc si J1 fait :
+
+Tisch → table ✅        +1
+article → der ✅        +1
+pluriel → Tischen ❌     STOP
+
+TOTAL J1 : 2
+
+J2 ne peut pas répondre die Tische derrière pour récupérer le dernier point. La question appartient déjà à J1.
+
+Et là ton système crée quelque chose d’assez malin : buzzer tôt devient un risque. Quelqu’un qui croit vaguement reconnaître le mot peut buzzer rapidement, mais il brûle son unique tentative. Quelqu’un d’autre peut attendre. Tu obtiens donc naturellement une tension sans ajouter de règles artificielles.
+
+Pour 4 joueurs, l'écran pourrait simplement avoir :
+
+                bestellen
+
+             00:43 restant
+
+
+       J1                    J2
+     [ BUZZ ]              [ BUZZ ]
+
+
+       J3                    J4
+     [ BUZZ ]              [ BUZZ ]
+
+
+Scores
+J1  12      J2  9      J3  14      J4  11
+
+Puis quand J3 buzz :
+
+                bestellen
+
+               J3 A BUZZÉ
+
+                 12.4 s
+
+          Traduction de bestellen
+
+          [__________________]
+
+               [ VALIDER ]
+
+
+J1 🔒       J2 🔒       J3 🎯       J4 🔒
+
+Et s’il réussit :
+
+bestellen = commander
+
+J3 +1
+
+FORT OU FAIBLE ?
+
+[ FORT ]       [ FAIBLE ]
+
+Puis :
+
+FAIBLE ✓
+
+J3 +1
+Total question : 2 pts
+
+CONJUGUE AVEC « ER »
+
+[ er __________________ ]
+
+                [ VALIDER ]
+
+Il peut finir à 3 points, tandis que celui qui ne savait que traduire aurait gardé son unique point.
+
+Je rajouterais seulement une dernière règle : ne pas annoncer à l’avance combien de volets possède le mot. Le joueur voit simplement la prochaine étape après réussite. Ça évite qu’il déduise la nature du mot grâce à l’interface.
+
+Donc oui : 2, 3 ou 4 joueurs sans problème, et je pense même que 3–4 joueurs rendraient le buzz beaucoup plus intéressant que seulement deux. Le système central que tu viens d’imaginer mérite surtout qu’on verrouille maintenant le ruleset exact V1 avant de penser UI ou code.
+
+
+======== REGLE DE LA V1 ====== 
+Ça veut dire chef : écrire noir sur blanc toutes les règles du jeu avant de coder, pour qu’il n’y ait aucune ambiguïté ensuite côté UX, backend, chrono, buzz, score ou multijoueur.
+
+Par exemple, notre Ruleset V1 pourrait déjà être celui-ci :
+
+2 à 4 joueurs dans une partie.
+Un mot allemand apparaît au centre.
+60 s maximum par mot tant que personne n’a buzzé.
+Chaque joueur peut buzzer une seule fois par mot.
+Dès qu’un joueur buzz : chrono général en pause, autres buzzers bloqués, il a 15 s pour répondre.
+Traduction fausse : il gagne 0, perd son droit de buzz pour ce mot, chrono général reprend et les autres peuvent tenter.
+Traduction correcte : +1 point garanti et il “gagne” la question ; les autres joueurs ne peuvent plus intervenir.
+Ensuite viennent les volets grammaticaux, uniquement pour ce joueur.
+Chaque volet réussi = +1 point supplémentaire.
+Dès qu’un volet est faux : arrêt immédiat des volets suivants, mais aucun point déjà gagné n’est retiré.
+Nom : traduction → article → pluriel.
+Verbe : traduction → fort/faible → conjugaison demandée.
+Pour un verbe faible, on peut quand même demander une conjugaison afin que chaque mot puisse valoir 3 points maximum.
+Pour un verbe fort, la conjugaison cible peut être du ou er/sie/es, choisie par le jeu.
+Quand personne ne trouve la traduction, ou que tous les buzz possibles ont été consommés : affichage de la correction complète.
+Puis mot suivant.
+Fin de partie après, par exemple, 10/15/20 mots, et celui qui possède le plus de points gagne.
+En cas d’égalité : soit égalité assumée, soit question décisive.
+Les traductions acceptées doivent être définies en base (commander, passer commande, etc.), pas uniquement une correspondance texte stricte.
+En multijoueur, le serveur décide qui a buzzé le premier, jamais les téléphones eux-mêmes.

@@ -55,6 +55,18 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="games">
+        <NativeTabs.Trigger.Label>Jeux</NativeTabs.Trigger.Label>
+
+        <NativeTabs.Trigger.Icon
+          src={{
+            default: require("@/assets/images/tabIcons/gameboy-outline.png"),
+            selected: require("@/assets/images/tabIcons/gameboy-filled.png"),
+          }}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Label>Profil</NativeTabs.Trigger.Label>
 

@@ -150,6 +150,14 @@ function AppNavigator() {
               };
             }}
           />
+
+          <Stack.Screen
+            name="games/buzz-wort"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
         </Stack.Protected>
       </Stack>
     </ThemeProvider>

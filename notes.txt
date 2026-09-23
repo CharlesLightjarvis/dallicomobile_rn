@@ -381,3 +381,66 @@ Le bouton Learn :
 │ VOCABULARY       │
 │ 720 words        │
 └──────────────────┘
+
+
+on donne un mot au centre de lecran a coté chacun a son buzzer.. on ne peut buzzer quune seule fois des quil buzz il a genre 15 secondes pour ecrire la traduction puis valider… si il rate on attend que le user deux buzz aussi avant la fin du temps general de la question (traduction).. si il buzz et trouuve la bonne traduction ca fait un point ensuite la question aura un deuxieme volet si cest un verbe fort ou faible si il trouve ca fait encore 1point mais troisieme volet ssi le verbe est fort on lui demande de conjugué soit a la deuxieme ou troisieme personne vu que cest juste la que ca change donc par exemple 
+
+temps pour chaque question de facon generale disons 1 minutes et peut etre mis en pause par buzz et reponse aux questions et volets il ne reprend que si un joueur rate et si le deuxieme joueur rate aussi on coupe on affiche le resulat avec la traduction et ses volets ou a la fin je sais pas cest a voir
+
+le mot bestellen saffiche : je buzz le temps sarrete jecris la traduction je trouve (1pt) deuxieme volet je dis cest un verbe faible (1p) ca fait deux points si je dis verbe fort je garde les 1 points de la traduction car cest lui le cœur les volets cest pour dilluer et avoir un gagnant
+
+meme chose si cest un nom genre tisch il donne la traduction un point deuxieme volet larticle 1 point troisieme volet le pluriel si il rate larticle il na pas le droit de progresser au pluriel meme chose avec les verbes et leur volet si tu rate un premier volet tas pas le droit dacceder au deuxieme volet et donc tu gardes tes un point de la traduction tu vois ce que je dis ? fait un graphe je confirme le truc cest un jeu je viens de penser et je ladore déjà 
+
+
+assets/
+└── buzz-wort/
+    ├── background/
+    │   ├── buzz-bg-arena.webp
+    │   └── buzz-center-stage.png
+    │
+    ├── buzzer/
+    │   ├── buzzer-idle.png
+    │   ├── buzzer-pressed.png
+    │   ├── buzzer-active.png
+    │   └── buzzer-locked.png
+    │
+    ├── players/
+    │   ├── player-seat.png
+    │   ├── avatar-ring-idle.png
+    │   ├── avatar-ring-active.png
+    │   ├── avatar-ring-locked.png
+    │   ├── avatar-ring-winner.png
+    │   └── leader-crown.png
+    │
+    ├── fx/
+    │   ├── buzz-impact.png
+    │   ├── correct-burst.png
+    │   ├── wrong-burst.png
+    │   ├── player-active-glow.png
+    │   ├── point-1.png
+    │   ├── point-2.png
+    │   └── point-3.png
+    │
+    ├── grammar/
+    │   ├── badge-translation.png
+    │   ├── badge-article.png
+    │   ├── badge-plural.png
+    │   ├── badge-verb-type.png
+    │   └── badge-conjugation.png
+    │
+    ├── branding/
+    │   ├── buzz-wort-logo.png
+    │   └── buzz-wort-icon.png
+    │
+    └── sounds/
+        ├── buzz.wav
+        ├── correct.wav
+        ├── wrong.wav
+        ├── point.wav
+        ├── countdown.wav
+        ├── timeout.wav
+        └── victory.wav
+
+
+
+
