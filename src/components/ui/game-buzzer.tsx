@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRef } from "react";
+import { useState } from "react";
 import { Animated, Pressable, View } from "react-native";
 import { withUniwind } from "uniwind";
 
@@ -59,8 +59,8 @@ export function GameBuzzer({
   size = 128,
   variant = "red",
 }: GameBuzzerProps) {
-  const pressY = useRef(new Animated.Value(0)).current;
-  const pressScale = useRef(new Animated.Value(1)).current;
+  const [pressY] = useState(() => new Animated.Value(0));
+  const [pressScale] = useState(() => new Animated.Value(1));
 
   const palette = PALETTES[variant];
 

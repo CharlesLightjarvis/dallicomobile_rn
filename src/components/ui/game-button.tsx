@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { useThemeColor } from "heroui-native";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -105,7 +105,7 @@ export function GameButton({
   /*
    * 3D PRESS
    */
-  const pressY = useRef(new Animated.Value(0)).current;
+  const [pressY] = useState(() => new Animated.Value(0));
 
   const locked = useRef(false);
 

@@ -1,56 +1,69 @@
 import { useEffect, useState } from "react";
-import { Animated, Text, View } from "react-native";
+import { Animated, Easing, Text, View } from "react-native";
 
 export type BuzzWortHistoryEvent = {
   id: number;
   text: string;
-  tone?: "default" | "success" | "danger";
+  tone: "neutral" | "buzz" | "success" | "danger" | "bonus";
 };
 
-function HistoryItem({ event }: { event: BuzzWortHistoryEvent }) {
-  const [opacity] = useState(() => new Animated.Value(0));
-  const [translateY] = useState(() => new Animated.Value(12));
+function HistoryLine({
+  event,
+  age,
+}: {
+  event: BuzzWortHistoryEvent;
+  age: number;
+}) {
+  const [entrance] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
-    const animation = Animated.sequence([
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.delay(2550),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]);
-
-    animation.start();
-
-    return () => animation.stop();
-  }, [opacity, translateY]);
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [entrance]);
 
   const color =
     event.tone === "success"
-      ? "text-[#06D6A0]"
+      ? "#86EFAC"
       : event.tone === "danger"
-        ? "text-[#EF476F]"
-        : "text-white/65";
+        ? "#FDA4AF"
+        : event.tone === "buzz"
+          ? "#FDE68A"
+          : event.tone === "bonus"
+            ? "#C4B5FD"
+            : "#FFFFFF";
 
   return (
     <Animated.View
       className="items-center"
-      style={{ opacity, transform: [{ translateY }] }}
+      style={{
+        opacity: Animated.multiply(entrance, Math.max(0.16, 1 - age * 0.24)),
+        transform: [
+          {
+            translateY: entrance.interpolate({
+              inputRange: [0, 1],
+              outputRange: [9, 0],
+            }),
+          },
+        ],
+      }}
     >
-      <Text className={`text-[11px] font-semibold ${color}`}>{event.text}</Text>
+      <Text
+        numberOfLines={1}
+        className="max-w-[260px] text-center font-bold"
+        style={{
+          color,
+          fontSize: age === 0 ? 11 : age === 1 ? 10 : 9,
+          textShadowColor: "rgba(0,0,0,0.8)",
+          textShadowOffset: { width: 0, height: 1 },
+          textShadowRadius: 3,
+        }}
+      >
+        {event.text}
+      </Text>
     </Animated.View>
   );
 }
@@ -60,10 +73,16 @@ export function BuzzWortHistoryFeed({
 }: {
   events: BuzzWortHistoryEvent[];
 }) {
+  const visible = events.slice(-4);
+
   return (
-    <View className="h-16 justify-end gap-1 overflow-hidden px-2">
-      {events.slice(-3).map((event) => (
-        <HistoryItem key={event.id} event={event} />
+    <View className="flex-1 justify-start gap-[4px] overflow-hidden pt-[3px]">
+      {visible.map((event, index) => (
+        <HistoryLine
+          key={event.id}
+          event={event}
+          age={visible.length - index - 1}
+        />
       ))}
     </View>
   );

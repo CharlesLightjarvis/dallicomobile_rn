@@ -169,3 +169,117 @@ Fin de partie après, par exemple, 10/15/20 mots, et celui qui possède le plus 
 En cas d’égalité : soit égalité assumée, soit question décisive.
 Les traductions acceptées doivent être définies en base (commander, passer commande, etc.), pas uniquement une correspondance texte stricte.
 En multijoueur, le serveur décide qui a buzzé le premier, jamais les téléphones eux-mêmes.
+
+
+• Ça ressemble à une vraie décision de game design, donc je préfère définir une règle complète avant de toucher au    
+  code.                                                                                                               
+                                                                                                                      
+  Je suis d’accord avec ton intuition : terminer immédiatement le mot dès qu’un bonus est raté pénalise les autres    
+  joueurs et les transforme en spectateurs. Par contre, je n’ouvrirais pas tous les bonus à tout le monde dès le      
+  départ, sinon gagner la traduction ne donne presque aucun avantage.                                                 
+                                                                                                                      
+  Je recommande un système de relais.                                                                                 
+                                                                                                                      
+  ### Règle recommandée                                                                                               
+                                                                                                                      
+  Chaque mot vaut toujours 3 points maximum :                                                                         
+                                                                                                                      
+  1. Traduction : +1                                                                                                  
+  2. Bonus 1 : +1                                                                                                     
+  3. Bonus 2 : +1                                                                                                     
+                                                                                                                      
+  Le joueur qui trouve la traduction :                                                                                
+                                                                                                                      
+  - gagne définitivement son point ;                                                                                  
+  - obtient la priorité sur le premier bonus ;                                                                        
+  - ne peut jamais perdre les points déjà gagnés.                                                                     
+                                                                                                                      
+  S’il réussit le bonus :                                                                                             
+                                                                                                                      
+  - il gagne +1 ;                                                                                                     
+  - il conserve la main pour le bonus suivant.                                                                        
+                                                                                                                      
+  S’il rate ou dépasse les 15 secondes :                                                                              
+                                                                                                                      
+  - son buzzer est verrouillé uniquement pour cette question ;                                                        
+  - les buzzers des autres joueurs se rallument ;                                                                     
+  - le premier qui buzze peut voler le point ;                                                                        
+  - s’il réussit, il gagne +1 et récupère la main pour le bonus suivant ;                                             
+  - s’il rate, son buzzer est également verrouillé et les joueurs restants peuvent tenter leur chance.                
+                                                                                                                      
+  Si personne ne trouve le bonus :                                                                                    
+                                                                                                                      
+  - la bonne réponse est affichée ;                                                                                   
+  - aucun point n’est distribué ;                                                                                     
+  - on passe quand même au bonus suivant ;                                                                            
+  - le bonus suivant commence avec les buzzers ouverts pour tous.                                                     
+                                                                                                                      
+  Exemple :                                                                                                           
+                                                                                                                      
+  Maya traduit correctement                                                                                           
+  Maya +1                                                                                                             
+                                                                                                                      
+  Maya rate le bonus 1                                                                                                
+  Lucas buzze et trouve                                                                                               
+  Lucas +1                                                                                                            
+                                                                                                                      
+  Lucas obtient la priorité sur le bonus 2                                                                            
+  Lucas rate                                                                                                          
+  Sarah buzze et trouve                                                                                               
+  Sarah +1                                                                                                            
+                                                                                                                      
+  Résultat du mot :                                                                                                   
+  Maya  +1                                                                                                            
+  Lucas +1                                                                                                            
+  Sarah +1                                                                                                            
+                                                                                                                      
+  Ça crée exactement ce qui manque actuellement : même lorsqu’un autre joueur contrôle le mot, tout le monde reste    
+  attentif parce qu’une occasion de voler peut arriver.                                                               
+                                                                                                                      
+  ### Ce que je déconseille                                                                                           
+                                                                                                                      
+  Je déconseille les points négatifs au début. Dans une application éducative, retirer un point pour une mauvaise     
+  réponse peut pousser les joueurs à ne plus essayer.                                                                 
+                                                                                                                      
+  Une mauvaise réponse devrait plutôt coûter :                                                                        
+                                                                                                                      
+  - le droit de répondre de nouveau à cette question ;                                                                
+  - du temps ;                                                                                                        
+  - la possibilité de conserver la main.                                                                              
+                                                                                                                      
+  C’est déjà une vraie sanction sans devenir frustrant.                                                               
+                                                                                                                      
+  Je déconseille aussi de remettre immédiatement tous les joueurs en compétition après chaque bonne réponse. Le joueur  ayant remporté le buzz doit recevoir un petit avantage, sinon la traduction et les bonus ressemblent à trois        
+  questions complètement indépendantes.                                                                               
+                                                                                                                      
+  ### Comment déterminer le gagnant                                                                                   
+                                                                                                                      
+  Pour 10, 15 ou 30 mots :                                                                                            
+                                                                                                                      
+  - la partie utilise toujours le nombre choisi ;                                                                     
+  - chaque mot distribue au maximum 3 points ;                                                                        
+  - le joueur ayant le plus de points gagne ;                                                                         
+  - aucune victoire anticipée pour la première version.                                                               
+                                                                                                                      
+  En cas d’égalité, je proposerais une mort subite :                                                                  
+                                                                                                                      
+  - seuls les joueurs à égalité peuvent buzzer ;                                                                      
+  - uniquement une traduction, sans bonus ;                                                                           
+  - mauvaise réponse : élimination de cette manche ;                                                                  
+  - bonne réponse : victoire si les autres ne répondent pas correctement ;                                            
+  - on ajoute des mots jusqu’à obtenir un seul gagnant.                                                               
+                                                                                                                      
+  ### Améliorations intéressantes                                                                                     
+                                                                                                                      
+  Pour rendre le jeu plus prenant plus tard :                                                                         
+                                                                                                                      
+  - VOL ! apparaît sur la carte centrale lorsqu’un bonus est rouvert ;                                                
+  - la carte change vers la couleur du nouveau joueur qui prend la main ;                                             
+  - un effet MAIN VOLÉE accompagne le changement ;                                                                    
+  - le joueur qui réussit les trois volets obtient un badge MAÎTRISE PARFAITE ;                                       
+  - trois bonnes réponses consécutives déclenchent un combo visuel, mais sans multiplier les points pour préserver    
+    l’équilibre ;                                                                                                     
+                                                                                                                      
+  - les joueurs éliminés d’une question peuvent encore envoyer des réactions ;                                        
+  - le temps pour voler pourrait être plus court : 8 à 10 secondes au lieu de 15, car les joueurs ont déjà vu la      
+    question. 

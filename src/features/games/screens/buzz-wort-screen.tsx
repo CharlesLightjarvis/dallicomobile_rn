@@ -45,12 +45,20 @@ const C = {
   muted: "#A7AEC9",
 };
 
+const BUZZER_ACCENTS: Record<string, string> = {
+  maya: "#F4141C",
+  lucas: "#FFB703",
+  sarah: "#8B5CF6",
+  william: "#22D3EE",
+};
+
 const INITIAL_SCORES = Object.fromEntries(
   BUZZ_WORT_PLAYERS.map((player) => [player.id, 0]),
 );
 
 const AVATARS = ["👾", "🐸", "🦊", "😼"];
 const REACTIONS = ["😂", "🔥", "😱"];
+const CENTER_ANSWER_PLACEHOLDER = "— — —";
 
 type HistoryTone = "neutral" | "buzz" | "success" | "danger" | "bonus";
 
@@ -58,6 +66,16 @@ type HistoryEvent = {
   id: number;
   tone: HistoryTone;
   text: string;
+};
+
+type CenterTone = "buzz" | "success" | "danger" | "bonus";
+
+type CenterMoment = {
+  tone: CenterTone;
+  playerId: string | null;
+  label: string;
+  value: string;
+  detail?: string;
 };
 
 function rgba(hex: string, alpha: number) {
@@ -81,21 +99,74 @@ export function BuzzWortScreen() {
   const [scores, setScores] = useState<Record<string, number>>(INITIAL_SCORES);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
+  const [nextWordCountdown, setNextWordCountdown] = useState(3);
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
+  const [centerMoment, setCenterMoment] = useState<CenterMoment | null>(null);
+  const [centerVfxKind, setCenterVfxKind] = useState<CenterTone | null>(null);
+  const [centerVfxPlayerId, setCenterVfxPlayerId] = useState<string | null>(
+    null,
+  );
 
-  const floatAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(0)).current;
-  const activePulse = useRef(new Animated.Value(0)).current;
-  const reactionArcAnim = useRef(new Animated.Value(0)).current;
-  const historyShiftAnim = useRef(new Animated.Value(1)).current;
+  const [floatAnim] = useState(() => new Animated.Value(0));
+  const [pulseAnim] = useState(() => new Animated.Value(0));
+  const [activePulse] = useState(() => new Animated.Value(0));
+  const [reactionArcAnim] = useState(() => new Animated.Value(0));
+  const [historyShiftAnim] = useState(() => new Animated.Value(1));
+  const [centerVfxAnim] = useState(() => new Animated.Value(0));
+  const [questionTransitionAnim] = useState(() => new Animated.Value(1));
   const historyIdRef = useRef(0);
+  const centerVfxTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const insets = useSafeAreaInsets();
 
   const question = BUZZ_WORT_QUESTIONS[questionIndex];
 
   const localPlayer = BUZZ_WORT_PLAYERS[3];
   const isLocalTurn = activePlayerId === localPlayer?.id;
+
+  const getPlayerAccent = useCallback(
+    (playerId: string | null | undefined) =>
+      (playerId ? BUZZER_ACCENTS[playerId] : undefined) ?? C.gold,
+    [],
+  );
+
+  const playCenterVfx = useCallback(
+    (tone: CenterTone, playerId: string | null = null) => {
+      setCenterVfxKind(tone);
+      setCenterVfxPlayerId(playerId);
+      centerVfxAnim.stopAnimation();
+      centerVfxAnim.setValue(0);
+
+      Animated.timing(centerVfxAnim, {
+        toValue: 1,
+        duration: 820,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+
+      if (centerVfxTimeoutRef.current) {
+        clearTimeout(centerVfxTimeoutRef.current);
+      }
+
+      centerVfxTimeoutRef.current = setTimeout(() => {
+        setCenterVfxKind(null);
+        setCenterVfxPlayerId(null);
+        centerVfxTimeoutRef.current = null;
+      }, 900);
+    },
+    [centerVfxAnim],
+  );
+
+  useEffect(
+    () => () => {
+      if (centerVfxTimeoutRef.current) {
+        clearTimeout(centerVfxTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   const pushHistory = useCallback(
     (event: Omit<HistoryEvent, "id">) => {
@@ -191,7 +262,7 @@ export function BuzzWortScreen() {
   }, [floatAnim, pulseAnim]);
 
   useEffect(() => {
-    if (!isLocalTurn) return;
+    if (!activePlayerId) return;
 
     const loop = Animated.loop(
       Animated.sequence([
@@ -210,7 +281,7 @@ export function BuzzWortScreen() {
 
     loop.start();
     return () => loop.stop();
-  }, [activePulse, isLocalTurn]);
+  }, [activePlayerId, activePulse]);
 
   useEffect(() => {
     if (phase === "reveal") return;
@@ -220,6 +291,14 @@ export function BuzzWortScreen() {
         setGeneralTime((value) => {
           if (value <= 1) {
             setFeedback(`Réponse : ${question.translation}`);
+            setCenterMoment({
+              tone: "danger",
+              playerId: null,
+              label: "TEMPS ÉCOULÉ",
+              value: question.translation,
+              detail: question.word,
+            });
+            playCenterVfx("danger");
             pushHistory({
               tone: "danger",
               text: `Temps écoulé · réponse : ${question.translation}`,
@@ -250,6 +329,15 @@ export function BuzzWortScreen() {
               text: `${timedOutPlayer?.name ?? "Le joueur"} n'a pas répondu à temps`,
             });
 
+            setCenterMoment({
+              tone: "danger",
+              playerId: activePlayerId,
+              label: "TEMPS ÉCOULÉ",
+              value: timedOutPlayer?.name ?? "Joueur",
+              detail: "Buzz consommé",
+            });
+            playCenterVfx("danger", activePlayerId);
+
             setFeedback("Temps écoulé · buzz consommé");
             setPhase("buzz");
             setActivePlayerId(null);
@@ -265,20 +353,40 @@ export function BuzzWortScreen() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [phase, activePlayerId, pushHistory, question.translation]);
+  }, [
+    phase,
+    activePlayerId,
+    playCenterVfx,
+    pushHistory,
+    question.translation,
+    question.word,
+  ]);
 
-  const resetQuestion = (nextIndex: number) => {
-    setQuestionIndex(nextIndex);
-    setPhase("buzz");
-    setActivePlayerId(null);
-    setBuzzedPlayerIds([]);
-    setSelectedChoice(null);
-    setBonusIndex(0);
-    setGeneralTime(60);
-    setPlayerTime(15);
-    setFeedback(null);
-    setTypedAnswer("");
-  };
+  const resetQuestion = useCallback(
+    (nextIndex: number) => {
+      setQuestionIndex(nextIndex);
+      setPhase("buzz");
+      setActivePlayerId(null);
+      setBuzzedPlayerIds([]);
+      setSelectedChoice(null);
+      setBonusIndex(0);
+      setGeneralTime(60);
+      setPlayerTime(15);
+      setNextWordCountdown(3);
+      setFeedback(null);
+      setTypedAnswer("");
+      setCenterMoment(null);
+      setCenterVfxKind(null);
+      setCenterVfxPlayerId(null);
+      if (centerVfxTimeoutRef.current) {
+        clearTimeout(centerVfxTimeoutRef.current);
+        centerVfxTimeoutRef.current = null;
+      }
+      centerVfxAnim.stopAnimation();
+      centerVfxAnim.setValue(0);
+    },
+    [centerVfxAnim],
+  );
 
   const handleBuzz = (playerId: string) => {
     if (phase !== "buzz" || buzzedPlayerIds.includes(playerId)) return;
@@ -293,6 +401,16 @@ export function BuzzWortScreen() {
       tone: "buzz",
       text: `${player?.name ?? "Un joueur"} a buzzé`,
     });
+
+    setCenterMoment({
+      tone: "buzz",
+      playerId,
+      label: `${player?.name ?? "JOUEUR"} A BUZZÉ`,
+      value: question.word,
+      detail:
+        playerId === localPlayer.id ? "À toi de répondre" : "Réponse en cours…",
+    });
+    playCenterVfx("buzz", playerId);
 
     setActivePlayerId(playerId);
     setPlayerTime(15);
@@ -357,6 +475,15 @@ export function BuzzWortScreen() {
     if (isCorrect) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+      setCenterMoment({
+        tone: "success",
+        playerId: activePlayerId,
+        label: "BONNE RÉPONSE",
+        value: finalAnswer,
+        detail: `${question.word} = ${question.translation}`,
+      });
+      playCenterVfx("success", activePlayerId);
+
       setScores((current) => ({
         ...current,
         [activePlayerId]: current[activePlayerId] + 1,
@@ -377,6 +504,14 @@ export function BuzzWortScreen() {
     }
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setCenterMoment({
+      tone: "danger",
+      playerId: activePlayerId,
+      label: "MAUVAISE RÉPONSE",
+      value: finalAnswer,
+      detail: `${answeringPlayer?.name ?? "Le joueur"} passe`,
+    });
+    playCenterVfx("danger", activePlayerId);
     failCurrentBuzz("mauvaise réponse · buzz consommé");
   };
 
@@ -400,12 +535,30 @@ export function BuzzWortScreen() {
         text: `Bonus raté · réponse : ${bonus.correctAnswer}`,
       });
 
+      setCenterMoment({
+        tone: "danger",
+        playerId: activePlayerId,
+        label: "BONUS RATÉ",
+        value: selectedChoice,
+        detail: `Réponse : ${bonus.correctAnswer}`,
+      });
+      playCenterVfx("danger", activePlayerId);
+
       setFeedback(`Réponse : ${bonus.correctAnswer}`);
       setPhase("reveal");
       return;
     }
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    setCenterMoment({
+      tone: "bonus",
+      playerId: activePlayerId,
+      label: "BONUS RÉUSSI",
+      value: selectedChoice,
+      detail: "+1 pt",
+    });
+    playCenterVfx("bonus", activePlayerId);
 
     setScores((current) => ({
       ...current,
@@ -461,9 +614,47 @@ export function BuzzWortScreen() {
   };
 
   const nextQuestionIndex = (questionIndex + 1) % BUZZ_WORT_QUESTIONS.length;
+
+  useEffect(() => {
+    if (phase !== "reveal") return;
+
+    const timeout = setTimeout(() => {
+      if (nextWordCountdown > 1) {
+        setNextWordCountdown((value) => value - 1);
+        return;
+      }
+
+      Animated.timing(questionTransitionAnim, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) return;
+
+        resetQuestion(nextQuestionIndex);
+        questionTransitionAnim.setValue(0);
+        Animated.spring(questionTransitionAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 90,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [
+    nextQuestionIndex,
+    nextWordCountdown,
+    phase,
+    questionTransitionAnim,
+    resetQuestion,
+  ]);
+
   const floatY = floatAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -4],
+    outputRange: [-22, -26],
   });
   const glowScale = pulseAnim.interpolate({
     inputRange: [0, 1],
@@ -473,10 +664,90 @@ export function BuzzWortScreen() {
     inputRange: [0, 1],
     outputRange: [0.78, 0.42],
   });
-  const localGlow = activePulse.interpolate({
+  const activeGlow = activePulse.interpolate({
     inputRange: [0, 1],
     outputRange: [0.35, 0.95],
   });
+  const questionTransitionScale = questionTransitionAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.82, 1],
+  });
+  const questionTransitionRotate = questionTransitionAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-8deg", "0deg"],
+  });
+
+  const activePlayer = activePlayerId
+    ? BUZZ_WORT_PLAYERS.find((player) => player.id === activePlayerId)
+    : null;
+  const centerCardScale = centerVfxAnim.interpolate({
+    inputRange: [0, 0.18, 0.42, 1],
+    outputRange: [1, 1.07, 0.985, 1],
+  });
+  const centerVfxOpacity = centerVfxAnim.interpolate({
+    inputRange: [0, 0.08, 0.72, 1],
+    outputRange: [0, 1, 0.8, 0],
+  });
+  const centerVfxScale = centerVfxAnim.interpolate({
+    inputRange: [0, 0.24, 1],
+    outputRange: [0.55, 1.16, 1.32],
+  });
+  const centerVfxLift = centerVfxAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, -18],
+  });
+  const centerAccent = getPlayerAccent(
+    centerMoment?.playerId ?? activePlayerId ?? centerVfxPlayerId,
+  );
+
+  const centerStepCount = question.bonuses.length + 1;
+  let centerStepIndex = 0;
+  let centerLabel = "TRADUCTION";
+  let centerQuestion = `Que signifie « ${question.word} » ?`;
+  let centerAnswer = CENTER_ANSWER_PLACEHOLDER;
+  let centerDetail = "En attente d'un buzz";
+
+  if (phase === "translation" && activePlayerId) {
+    const liveAnswer = isLocalTurn ? typedAnswer.trim() : "";
+
+    centerLabel = `${activePlayer?.name ?? "JOUEUR"} RÉPOND`;
+    centerAnswer = liveAnswer || CENTER_ANSWER_PLACEHOLDER;
+    centerDetail = liveAnswer
+      ? "Réponse en cours"
+      : "15 secondes pour répondre";
+  } else if (phase === "bonus" && activePlayerId) {
+    const bonus = question.bonuses[bonusIndex];
+
+    centerStepIndex = bonusIndex + 1;
+    centerLabel = `${activePlayer?.name ?? "JOUEUR"} · BONUS`;
+    centerQuestion = bonus.label;
+    centerAnswer = selectedChoice || CENTER_ANSWER_PLACEHOLDER;
+    centerDetail = selectedChoice ? "Réponse sélectionnée" : "Choix en attente";
+  } else if (phase === "reveal") {
+    centerStepIndex = centerStepCount;
+    centerLabel = centerMoment?.label ?? "RÉPONSE";
+    centerQuestion = `${question.word} = ${question.translation}`;
+    centerAnswer = `PROCHAIN · ${nextWordCountdown}S`;
+    centerDetail = "Préparez-vous";
+  }
+
+  const centerRemainingSteps = Math.max(
+    0,
+    centerStepCount - Math.min(centerStepIndex + 1, centerStepCount),
+  );
+
+  const centerVfxColor =
+    centerVfxKind === "danger"
+      ? "#FB7185"
+      : centerVfxKind === "success" || centerVfxKind === "bonus"
+        ? "#FACC15"
+        : getPlayerAccent(centerVfxPlayerId);
+  const centerVfxText =
+    centerVfxKind === "success" || centerVfxKind === "bonus"
+      ? "+1"
+      : centerVfxKind === "danger"
+        ? "×"
+        : "BUZZ!";
 
   const renderSeat = (
     player: (typeof BUZZ_WORT_PLAYERS)[number],
@@ -484,9 +755,14 @@ export function BuzzWortScreen() {
     position: "top" | "left" | "right" | "bottom",
   ) => {
     const locked = buzzedPlayerIds.includes(player.id);
-    const active = activePlayerId === player.id;
+    const active = activePlayerId === player.id && phase !== "reveal";
     const local = index === 3;
     const failed = locked && !active;
+    const lateral = position === "left" || position === "right";
+    const playerTimeProgress = `${Math.max(
+      0,
+      Math.min(100, (playerTime / 15) * 100),
+    )}%` as `${number}%`;
 
     return (
       <Pressable
@@ -506,27 +782,36 @@ export function BuzzWortScreen() {
       >
         <View className="relative items-center justify-center">
           <View className="relative items-center justify-center">
-            {local && active ? (
+            {active ? (
               <StyledAnimatedView
                 pointerEvents="none"
-                className="absolute w-[68px] h-[68px] rounded-full bg-[#1597F5]"
+                className="absolute w-[68px] h-[68px] rounded-full"
                 style={{
-                  opacity: localGlow,
+                  backgroundColor: local ? C.cyan : player.color,
+                  opacity: activeGlow,
                   transform: [{ scale: 1.03 }],
                 }}
               />
             ) : null}
 
-            {local && active ? (
-              <View className="absolute top-[-13px] w-[54px] h-[5px] rounded-full bg-[rgba(255,255,255,0.18)] overflow-hidden">
+            {active ? (
+              <View
+                className={[
+                  "absolute rounded-full bg-[rgba(255,255,255,0.18)] overflow-hidden",
+                  position === "left"
+                    ? "left-[62px] top-[6px] w-[5px] h-[42px]"
+                    : position === "right"
+                      ? "right-[62px] top-[6px] w-[5px] h-[42px]"
+                      : "top-[-13px] w-[54px] h-[5px]",
+                ].join(" ")}
+              >
                 <View
-                  className="h-full rounded-full bg-[#FACC15]"
-                  style={{
-                    width: `${Math.max(
-                      0,
-                      Math.min(100, (playerTime / 15) * 100),
-                    )}%`,
-                  }}
+                  className="absolute bottom-0 rounded-full bg-[#FACC15]"
+                  style={
+                    lateral
+                      ? { width: "100%", height: playerTimeProgress }
+                      : { height: "100%", width: playerTimeProgress }
+                  }
                 />
               </View>
             ) : null}
@@ -578,10 +863,21 @@ export function BuzzWortScreen() {
             ) : null}
           </View>
 
-          {local && active ? (
-            <View className="mt-[4px] rounded-full bg-[#1597F5] px-[10px] py-[3px]">
-              <Text className="text-[#FFFFFF] text-[10px] font-[900]">
-                À VOTRE TOUR
+          {active ? (
+            <View
+              className={[
+                "mt-[4px] h-[22px] rounded-full items-center justify-center",
+                lateral ? "w-[82px] px-[6px]" : "max-w-[140px] px-[10px]",
+              ].join(" ")}
+              style={{ backgroundColor: local ? C.cyan : player.color }}
+            >
+              <Text
+                allowFontScaling={false}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                className="w-full text-center text-[#FFFFFF] text-[10px] font-[900]"
+              >
+                {local ? "À VOTRE TOUR" : `TOUR DE ${player.name.toUpperCase()}`}
               </Text>
             </View>
           ) : (
@@ -885,28 +1181,6 @@ export function BuzzWortScreen() {
       );
     }
 
-    if (phase === "reveal") {
-      return (
-        <View className="absolute left-[28px] right-[28px] bottom-[116px] z-[70] rounded-[20px] border-[1px] border-[rgba(255,183,3,0.2)] bg-[rgba(12,16,39,0.96)] p-[10px]">
-          <View className="flex-row items-center justify-center gap-[6px]">
-            <Ionicons name="sparkles-outline" size={15} color={C.gold} />
-            <Text className="text-[#FFFFFF] text-[11px] font-[900]">
-              Réponse : {question.translation}
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={() => resetQuestion(nextQuestionIndex)}
-            className="mt-[8px] h-[36px] rounded-[12px] bg-[#FFB703] items-center justify-center active:scale-[0.98]"
-          >
-            <Text className="text-[#111827] text-[10px] font-[900] tracking-[0.8px]">
-              MOT SUIVANT
-            </Text>
-          </Pressable>
-        </View>
-      );
-    }
-
     return null;
   };
 
@@ -981,7 +1255,7 @@ export function BuzzWortScreen() {
         <View className="relative items-center justify-center">
           {renderSeat(BUZZ_WORT_PLAYERS[0], 0, "top")}
 
-          <View className="absolute left-1/2 ml-[38px] top-[30px] z-[50]">
+          <View className="absolute right-1/2 mr-[38px] top-[30px] z-[50]">
             <GameBuzzer
               size={80}
               variant="red"
@@ -1025,7 +1299,7 @@ export function BuzzWortScreen() {
 
         <View className="w-[190px] items-center justify-center relative">
           {phase === "buzz" ? (
-            <View className="absolute top-[-18px] w-[132px] h-[4px] rounded-full bg-white/10 overflow-hidden z-[20]">
+            <View className="absolute top-[-40px] w-[132px] h-[4px] rounded-full bg-white/10 overflow-hidden z-[20]">
               <View
                 className="h-full rounded-full bg-[#FFB703]"
                 style={{
@@ -1041,12 +1315,18 @@ export function BuzzWortScreen() {
           <StyledAnimatedView
             className="relative items-center justify-center"
             style={{
-              transform: [{ translateY: floatY }],
+              opacity: questionTransitionAnim,
+              transform: [
+                { translateY: floatY },
+                { scale: centerCardScale },
+                { scale: questionTransitionScale },
+                { rotate: questionTransitionRotate },
+              ],
             }}
           >
             <View
               pointerEvents="none"
-              className="absolute top-[94px] w-[112px] h-[18px] rounded-full bg-black/40"
+              className="absolute top-[132px] w-[128px] h-[18px] rounded-full bg-black/40"
               style={{
                 transform: [{ scaleX: 1.25 }],
               }}
@@ -1057,7 +1337,7 @@ export function BuzzWortScreen() {
               colors={["#090B20", "#11142F", "#050713"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="absolute top-[12px] w-[148px] h-[108px] rounded-[25px] border border-black/60"
+              className="absolute top-[12px] w-[172px] h-[146px] rounded-[25px] border border-black/60"
             />
 
             <StyledLinearGradient
@@ -1065,31 +1345,41 @@ export function BuzzWortScreen() {
               colors={["#14183C", "#0A0C22"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="absolute top-[7px] w-[148px] h-[108px] rounded-[25px] border border-[#332B10]"
+              className="absolute top-[7px] w-[172px] h-[146px] rounded-[25px]"
+              style={{
+                borderWidth: 1,
+                borderColor: rgba(centerAccent, 0.24),
+              }}
             />
 
             <StyledAnimatedView
               pointerEvents="none"
-              className="absolute w-[154px] h-[114px] rounded-[28px] bg-[#FFB703]"
+              className="absolute w-[178px] h-[152px] rounded-[28px]"
               style={{
+                backgroundColor: centerAccent,
                 opacity: glowOpacity,
                 transform: [{ scale: glowScale }],
               }}
             />
 
             <StyledLinearGradient
-              colors={["#FFF3A3", "#FFB703", "#F47B00", "#FFE07A"]}
+              colors={[
+                rgba(centerAccent, 0.98),
+                centerAccent,
+                "#FFF3A3",
+                rgba(centerAccent, 0.84),
+              ]}
               locations={[0, 0.34, 0.68, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="w-[150px] h-[110px] rounded-[26px] p-[3px]"
+              className="w-[174px] h-[148px] rounded-[26px] p-[3px]"
             >
               <StyledLinearGradient
-                colors={["#323A8D", "#242A71", "#171B4D"]}
-                locations={[0, 0.5, 1]}
+                colors={[rgba(centerAccent, 0.34), "#242A71", "#171B4D"]}
+                locations={[0, 0.48, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="relative flex-1 rounded-[23px] overflow-hidden items-center justify-center"
+                className="relative flex-1 rounded-[23px] overflow-hidden px-[10px] pt-[9px] pb-[8px]"
               >
                 <StyledLinearGradient
                   pointerEvents="none"
@@ -1105,36 +1395,104 @@ export function BuzzWortScreen() {
 
                 <View
                   pointerEvents="none"
-                  className="absolute w-[105px] h-[65px] rounded-full bg-[#6366F1]/20"
+                  className="absolute top-[32px] self-center w-[118px] h-[72px] rounded-full"
+                  style={{ backgroundColor: rgba(centerAccent, 0.12) }}
                 />
 
-                <View className="mb-[5px] rounded-full border border-white/10 bg-black/20 px-[9px] py-[3px]">
-                  <Text className="text-[#D8DCFF] text-[8px] font-[900] tracking-[1.8px]">
-                    VERBE
+                <View className="flex-row items-center justify-between">
+                  <View
+                    className="max-w-[112px] rounded-full border border-white/10 bg-black/20 px-[7px] py-[3px]"
+                    style={{ borderColor: rgba(centerAccent, 0.28) }}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      className="text-[6px] font-[900] tracking-[0.8px] text-white/80"
+                    >
+                      {centerLabel}
+                    </Text>
+                  </View>
+
+                  <Text className="text-[7px] font-[900] text-white/55">
+                    {phase === "reveal"
+                      ? `${nextWordCountdown}s`
+                      : `${Math.min(centerStepIndex + 1, centerStepCount)}/${centerStepCount}`}
                   </Text>
                 </View>
 
                 <Text
-                  adjustsFontSizeToFit
-                  numberOfLines={1}
-                  className="max-w-[125px] text-center text-[#FFFFFF] text-[27px] leading-[32px] font-[900] tracking-[-0.8px]"
+                  allowFontScaling={false}
+                  numberOfLines={2}
+                  className="mt-[8px] min-h-[32px] text-center text-[#FFFFFF] text-[13px] leading-[16px] font-[900]"
                 >
-                  {question.word}
+                  {centerQuestion}
                 </Text>
 
-                <StyledLinearGradient
-                  pointerEvents="none"
-                  colors={[
-                    "transparent",
-                    "#FFB703",
-                    "#FFF4A3",
-                    "#FFB703",
-                    "transparent",
-                  ]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  className="mt-[7px] w-[74px] h-[2px] rounded-full"
-                />
+                <View
+                  accessible
+                  accessibilityLabel={
+                    centerAnswer === CENTER_ANSWER_PLACEHOLDER
+                      ? "Réponse en attente"
+                      : `Réponse : ${centerAnswer}`
+                  }
+                  className="mt-[6px] h-[36px] rounded-[10px] border bg-black/25 items-center justify-center px-[8px]"
+                  style={{ borderColor: rgba(centerAccent, 0.3) }}
+                >
+                  <Text
+                    allowFontScaling={false}
+                    numberOfLines={2}
+                    className="max-w-[136px] text-center text-white font-[900]"
+                    style={{
+                      fontSize:
+                        centerAnswer === CENTER_ANSWER_PLACEHOLDER ? 18 : 16,
+                      lineHeight: 18,
+                      letterSpacing:
+                        centerAnswer === CENTER_ANSWER_PLACEHOLDER ? 2 : 0,
+                    }}
+                  >
+                    {centerAnswer}
+                  </Text>
+                </View>
+
+                <View className="mt-auto">
+                  <View className="mb-[4px] flex-row items-center justify-between">
+                    <Text
+                      numberOfLines={1}
+                      className="max-w-[108px] text-[6px] font-[800] text-white/50"
+                    >
+                      {centerDetail}
+                    </Text>
+                    <Text className="text-[6px] font-[900] text-white/65">
+                      {phase === "reveal"
+                        ? "MOT SUIVANT"
+                        : centerRemainingSteps === 0
+                          ? "DERNIÈRE"
+                          : `${centerRemainingSteps} RESTANTE${centerRemainingSteps > 1 ? "S" : ""}`}
+                    </Text>
+                  </View>
+
+                  <View className="h-[4px] flex-row gap-[3px]">
+                    {Array.from({ length: centerStepCount }, (_, stepIndex) => {
+                      const isCompleted =
+                        phase === "reveal" || stepIndex < centerStepIndex;
+                      const isCurrent =
+                        phase !== "reveal" && stepIndex === centerStepIndex;
+
+                      return (
+                        <View
+                          key={stepIndex}
+                          className="h-full flex-1 rounded-full"
+                          style={{
+                            backgroundColor: isCompleted
+                              ? C.emerald
+                              : isCurrent
+                                ? centerAccent
+                                : "rgba(255,255,255,0.13)",
+                          }}
+                        />
+                      );
+                    })}
+                  </View>
+                </View>
 
                 <View
                   pointerEvents="none"
@@ -1168,6 +1526,119 @@ export function BuzzWortScreen() {
           {renderSeat(BUZZ_WORT_PLAYERS[2], 2, "right")}
         </View>
       </View>
+
+      {centerVfxKind ? (
+        <View
+          pointerEvents="none"
+          className="absolute left-0 right-0 top-1/2 z-[120] items-center"
+          style={{
+            elevation: 40,
+            transform: [{ translateY: -154 }],
+          }}
+        >
+          <View className="relative h-[130px] w-[150px] items-center">
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 8,
+                width: 88,
+                height: 88,
+                borderRadius: 44,
+                borderWidth: 2,
+                borderColor: rgba(centerVfxColor, 0.7),
+                elevation: 30,
+                opacity: centerVfxOpacity,
+                transform: [{ scale: centerVfxScale }],
+              }}
+            />
+
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 17,
+                width: 70,
+                height: 70,
+                borderRadius: 23,
+                elevation: 32,
+                zIndex: 2,
+                transform: [
+                  { translateY: centerVfxLift },
+                  { scale: centerVfxScale },
+                  {
+                    rotate: centerVfxAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["-7deg", "4deg"],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <StyledLinearGradient
+                colors={[
+                  rgba(centerVfxColor, 0.98),
+                  rgba(centerVfxColor, 0.72),
+                  "#171B4D",
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="flex-1 overflow-hidden rounded-[23px] border-[2px] border-white/25 items-center justify-center"
+              >
+                <Text className="text-[24px] font-[900] text-white">
+                  {centerVfxText}
+                </Text>
+                <Text className="mt-[-2px] text-[6px] font-[900] tracking-[1px] text-white/75">
+                  {centerVfxKind === "buzz"
+                    ? "RÉPONDS !"
+                    : centerVfxKind === "danger"
+                      ? "RATÉ"
+                      : "POINT"}
+                </Text>
+              </StyledLinearGradient>
+            </Animated.View>
+
+            {[
+              { x: 38, y: -30, size: 7, color: centerVfxColor },
+              { x: -42, y: -22, size: 5, color: centerVfxColor },
+              { x: 26, y: 35, size: 6, color: "#FFFFFF" },
+              { x: -30, y: 32, size: 4, color: "#FFFFFF" },
+            ].map((particle) => (
+              <Animated.View
+                key={`${particle.x}-${particle.y}`}
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: 50 - particle.size / 2,
+                  left: 75 - particle.size / 2,
+                  width: particle.size,
+                  height: particle.size,
+                  borderRadius: particle.size / 2,
+                  backgroundColor: particle.color,
+                  elevation: 31,
+                  opacity: centerVfxOpacity,
+                  zIndex: 1,
+                  transform: [
+                    {
+                      translateX: centerVfxAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, particle.x],
+                      }),
+                    },
+                    {
+                      translateY: centerVfxAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, particle.y],
+                      }),
+                    },
+                    { scale: centerVfxScale },
+                  ],
+                }}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
 
       <View className="relative flex-1 min-h-[495px] px-[8px] pt-[2px] pb-[4px] justify-end">
         <View className="relative items-center mt-[2px]">
