@@ -1,8 +1,10 @@
 export type BuzzWortPhase =
   | "buzz"
   | "translation"
+  | "bonus-buzz"
   | "bonus"
-  | "reveal";
+  | "reveal"
+  | "finished";
 
 export type BuzzWortPlayer = {
   id: string;

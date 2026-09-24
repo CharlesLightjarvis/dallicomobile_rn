@@ -25,6 +25,15 @@ import {
   BUZZ_WORT_QUESTIONS,
 } from "../data/buzz-wort-round";
 import type { BuzzWortPhase } from "../types/buzz-wort";
+import {
+  BUZZ_WORT_BONUS_SECONDS,
+  BUZZ_WORT_MATCH_WORDS,
+  BUZZ_WORT_REVEAL_SECONDS,
+  BUZZ_WORT_STEAL_SECONDS,
+  BUZZ_WORT_TRANSLATION_SECONDS,
+  getBuzzWortLeaders,
+  getEligibleBuzzWortPlayers,
+} from "../utils/buzz-wort-rules";
 
 const StyledLinearGradient = withUniwind(LinearGradient);
 const StyledAnimatedView = withUniwind(Animated.View);
@@ -55,6 +64,7 @@ const BUZZER_ACCENTS: Record<string, string> = {
 const INITIAL_SCORES = Object.fromEntries(
   BUZZ_WORT_PLAYERS.map((player) => [player.id, 0]),
 );
+const PLAYER_IDS = BUZZ_WORT_PLAYERS.map((player) => player.id);
 
 const AVATARS = ["👾", "🐸", "🦊", "😼"];
 const REACTIONS = ["😂", "🔥", "😱"];
@@ -68,7 +78,13 @@ type HistoryEvent = {
   text: string;
 };
 
-type CenterTone = "buzz" | "success" | "danger" | "bonus";
+type CenterTone =
+  | "buzz"
+  | "success"
+  | "danger"
+  | "bonus"
+  | "steal"
+  | "combo";
 
 type CenterMoment = {
   tone: CenterTone;
@@ -92,14 +108,37 @@ export function BuzzWortScreen() {
   const [phase, setPhase] = useState<BuzzWortPhase>("buzz");
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
   const [buzzedPlayerIds, setBuzzedPlayerIds] = useState<string[]>([]);
+  const [bonusLockedPlayerIds, setBonusLockedPlayerIds] = useState<string[]>(
+    [],
+  );
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [bonusIndex, setBonusIndex] = useState(0);
   const [generalTime, setGeneralTime] = useState(60);
-  const [playerTime, setPlayerTime] = useState(15);
+  const [playerTime, setPlayerTime] = useState(
+    BUZZ_WORT_TRANSLATION_SECONDS,
+  );
+  const [activeAnswerLimit, setActiveAnswerLimit] = useState(
+    BUZZ_WORT_TRANSLATION_SECONDS,
+  );
+  const [bonusBuzzTime, setBonusBuzzTime] = useState(BUZZ_WORT_STEAL_SECONDS);
   const [scores, setScores] = useState<Record<string, number>>(INITIAL_SCORES);
+  const [wordPoints, setWordPoints] = useState<Record<string, number>>(
+    INITIAL_SCORES,
+  );
+  const [correctStreaks, setCorrectStreaks] = useState<Record<string, number>>(
+    INITIAL_SCORES,
+  );
+  const [masteryCounts, setMasteryCounts] = useState<Record<string, number>>(
+    INITIAL_SCORES,
+  );
+  const [wordsPlayed, setWordsPlayed] = useState(0);
+  const [tieBreakPlayerIds, setTieBreakPlayerIds] = useState<string[]>([]);
+  const [winnerPlayerId, setWinnerPlayerId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
-  const [nextWordCountdown, setNextWordCountdown] = useState(3);
+  const [nextWordCountdown, setNextWordCountdown] = useState(
+    BUZZ_WORT_REVEAL_SECONDS,
+  );
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [centerMoment, setCenterMoment] = useState<CenterMoment | null>(null);
@@ -283,83 +322,224 @@ export function BuzzWortScreen() {
     return () => loop.stop();
   }, [activePlayerId, activePulse]);
 
-  useEffect(() => {
-    if (phase === "reveal") return;
+  const finishCurrentWord = useCallback(
+    (moment: CenterMoment) => {
+      setCenterMoment(moment);
+      setActivePlayerId(null);
+      setSelectedChoice(null);
+      setTypedAnswer("");
+      setNextWordCountdown(BUZZ_WORT_REVEAL_SECONDS);
+      setPhase("reveal");
+    },
+    [],
+  );
 
-    const timer = setInterval(() => {
-      if (phase === "buzz") {
-        setGeneralTime((value) => {
-          if (value <= 1) {
-            setFeedback(`Réponse : ${question.translation}`);
-            setCenterMoment({
-              tone: "danger",
-              playerId: null,
-              label: "TEMPS ÉCOULÉ",
-              value: question.translation,
-              detail: question.word,
-            });
-            playCenterVfx("danger");
-            pushHistory({
-              tone: "danger",
-              text: `Temps écoulé · réponse : ${question.translation}`,
-            });
-            setPhase("reveal");
-            return 0;
-          }
+  const advanceAfterUnclaimedBonus = useCallback(() => {
+    const currentBonus = question.bonuses[bonusIndex];
 
-          return value - 1;
-        });
-      } else {
-        setPlayerTime((value) => {
-          if (value <= 1) {
-            const timedOutPlayer = BUZZ_WORT_PLAYERS.find(
-              (player) => player.id === activePlayerId,
-            );
+    pushHistory({
+      tone: "neutral",
+      text: `Bonus sans gagnant · réponse : ${currentBonus.correctAnswer}`,
+    });
 
-            if (activePlayerId) {
-              setBuzzedPlayerIds((current) =>
-                current.includes(activePlayerId)
-                  ? current
-                  : [...current, activePlayerId],
-              );
-            }
+    if (bonusIndex < question.bonuses.length - 1) {
+      const nextBonusIndex = bonusIndex + 1;
+      setBonusIndex(nextBonusIndex);
+      setBonusLockedPlayerIds([]);
+      setActivePlayerId(null);
+      setSelectedChoice(null);
+      setBonusBuzzTime(BUZZ_WORT_STEAL_SECONDS);
+      setFeedback("Bonus suivant · buzz ouvert à tous");
+      setCenterMoment({
+        tone: "steal",
+        playerId: null,
+        label: "BONUS SUIVANT",
+        value: "VOL OUVERT",
+        detail: question.bonuses[nextBonusIndex].label,
+      });
+      setPhase("bonus-buzz");
+      return;
+    }
 
-            pushHistory({
-              tone: "danger",
-              text: `${timedOutPlayer?.name ?? "Le joueur"} n'a pas répondu à temps`,
-            });
+    finishCurrentWord({
+      tone: "danger",
+      playerId: null,
+      label: "MOT TERMINÉ",
+      value: question.translation,
+      detail: question.word,
+    });
+  }, [bonusIndex, finishCurrentWord, pushHistory, question]);
 
-            setCenterMoment({
-              tone: "danger",
-              playerId: activePlayerId,
-              label: "TEMPS ÉCOULÉ",
-              value: timedOutPlayer?.name ?? "Joueur",
-              detail: "Buzz consommé",
-            });
-            playCenterVfx("danger", activePlayerId);
+  const openBonusSteal = useCallback(
+    (failedPlayerId: string, reason: string) => {
+      const failedPlayer = BUZZ_WORT_PLAYERS.find(
+        (player) => player.id === failedPlayerId,
+      );
+      const nextLockedPlayers = Array.from(
+        new Set([...bonusLockedPlayerIds, failedPlayerId]),
+      );
+      const remainingPlayers = getEligibleBuzzWortPlayers(
+        PLAYER_IDS,
+        nextLockedPlayers,
+      );
 
-            setFeedback("Temps écoulé · buzz consommé");
-            setPhase("buzz");
-            setActivePlayerId(null);
-            setSelectedChoice(null);
-            setTypedAnswer("");
+      setCorrectStreaks((current) => ({
+        ...current,
+        [failedPlayerId]: 0,
+      }));
+      setBonusLockedPlayerIds(nextLockedPlayers);
+      setActivePlayerId(null);
+      setSelectedChoice(null);
+      setTypedAnswer("");
 
-            return 15;
-          }
+      pushHistory({
+        tone: "danger",
+        text: `${failedPlayer?.name ?? "Le joueur"} · ${reason}`,
+      });
 
-          return value - 1;
-        });
+      if (remainingPlayers.length === 0) {
+        advanceAfterUnclaimedBonus();
+        return;
       }
+
+      setBonusBuzzTime(BUZZ_WORT_STEAL_SECONDS);
+      setFeedback("Point à voler · buzzez !");
+      setCenterMoment({
+        tone: "steal",
+        playerId: null,
+        label: "VOL OUVERT",
+        value: "BUZZEZ !",
+        detail: question.bonuses[bonusIndex].label,
+      });
+      playCenterVfx("steal");
+      setPhase("bonus-buzz");
+    },
+    [
+      advanceAfterUnclaimedBonus,
+      bonusIndex,
+      bonusLockedPlayerIds,
+      playCenterVfx,
+      pushHistory,
+      question.bonuses,
+    ],
+  );
+
+  useEffect(() => {
+    if (phase === "reveal" || phase === "finished") return;
+
+    const timer = setTimeout(() => {
+      if (phase === "buzz") {
+        if (generalTime <= 1) {
+          setFeedback(`Réponse : ${question.translation}`);
+          playCenterVfx("danger");
+          pushHistory({
+            tone: "danger",
+            text: `Temps écoulé · réponse : ${question.translation}`,
+          });
+          finishCurrentWord({
+            tone: "danger",
+            playerId: null,
+            label: "TEMPS ÉCOULÉ",
+            value: question.translation,
+            detail: question.word,
+          });
+          return;
+        }
+
+        setGeneralTime((value) => value - 1);
+        return;
+      }
+
+      if (phase === "bonus-buzz") {
+        if (bonusBuzzTime <= 1) {
+          advanceAfterUnclaimedBonus();
+          return;
+        }
+
+        setBonusBuzzTime((value) => value - 1);
+        return;
+      }
+
+      if (!activePlayerId) return;
+
+      if (playerTime <= 1) {
+        const timedOutPlayer = BUZZ_WORT_PLAYERS.find(
+          (player) => player.id === activePlayerId,
+        );
+
+        setCenterMoment({
+          tone: "danger",
+          playerId: activePlayerId,
+          label: "TEMPS ÉCOULÉ",
+          value: timedOutPlayer?.name ?? "Joueur",
+          detail: "Réponse perdue",
+        });
+        playCenterVfx("danger", activePlayerId);
+
+        if (phase === "bonus") {
+          openBonusSteal(activePlayerId, "temps écoulé");
+          return;
+        }
+
+        const nextLockedPlayers = Array.from(
+          new Set([...buzzedPlayerIds, activePlayerId]),
+        );
+        setCorrectStreaks((current) => ({
+          ...current,
+          [activePlayerId]: 0,
+        }));
+        setBuzzedPlayerIds(nextLockedPlayers);
+        setActivePlayerId(null);
+        setSelectedChoice(null);
+        setTypedAnswer("");
+
+        pushHistory({
+          tone: "danger",
+          text: `${timedOutPlayer?.name ?? "Le joueur"} n'a pas répondu à temps`,
+        });
+
+        if (
+          getEligibleBuzzWortPlayers(
+            PLAYER_IDS,
+            nextLockedPlayers,
+            tieBreakPlayerIds.length > 0 ? tieBreakPlayerIds : undefined,
+          ).length === 0
+        ) {
+          finishCurrentWord({
+            tone: "danger",
+            playerId: null,
+            label: "PERSONNE NE TROUVE",
+            value: question.translation,
+            detail: question.word,
+          });
+          return;
+        }
+
+        setFeedback("Buzz consommé · aux autres joueurs");
+        setPhase("buzz");
+        setPlayerTime(BUZZ_WORT_TRANSLATION_SECONDS);
+        return;
+      }
+
+      setPlayerTime((value) => value - 1);
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearTimeout(timer);
   }, [
-    phase,
     activePlayerId,
+    advanceAfterUnclaimedBonus,
+    bonusBuzzTime,
+    buzzedPlayerIds,
+    finishCurrentWord,
+    generalTime,
+    openBonusSteal,
+    phase,
+    playerTime,
     playCenterVfx,
     pushHistory,
     question.translation,
     question.word,
+    tieBreakPlayerIds,
   ]);
 
   const resetQuestion = useCallback(
@@ -368,11 +548,15 @@ export function BuzzWortScreen() {
       setPhase("buzz");
       setActivePlayerId(null);
       setBuzzedPlayerIds([]);
+      setBonusLockedPlayerIds([]);
       setSelectedChoice(null);
       setBonusIndex(0);
       setGeneralTime(60);
-      setPlayerTime(15);
-      setNextWordCountdown(3);
+      setPlayerTime(BUZZ_WORT_TRANSLATION_SECONDS);
+      setActiveAnswerLimit(BUZZ_WORT_TRANSLATION_SECONDS);
+      setBonusBuzzTime(BUZZ_WORT_STEAL_SECONDS);
+      setNextWordCountdown(BUZZ_WORT_REVEAL_SECONDS);
+      setWordPoints(INITIAL_SCORES);
       setFeedback(null);
       setTypedAnswer("");
       setCenterMoment(null);
@@ -388,8 +572,74 @@ export function BuzzWortScreen() {
     [centerVfxAnim],
   );
 
+  const restartMatch = () => {
+    setScores(INITIAL_SCORES);
+    setWordPoints(INITIAL_SCORES);
+    setCorrectStreaks(INITIAL_SCORES);
+    setMasteryCounts(INITIAL_SCORES);
+    setWordsPlayed(0);
+    setTieBreakPlayerIds([]);
+    setWinnerPlayerId(null);
+    setHistoryEvents([]);
+    historyIdRef.current = 0;
+    resetQuestion(0);
+    if (questionIndex === 0) {
+      pushHistory({
+        tone: "neutral",
+        text: `Nouvelle partie · ${BUZZ_WORT_QUESTIONS[0].word}`,
+      });
+    }
+  };
+
+  const registerCorrectAnswer = (playerId: string) => {
+    const nextWordPoints = (wordPoints[playerId] ?? 0) + 1;
+    const nextStreak = (correctStreaks[playerId] ?? 0) + 1;
+
+    setScores((current) => ({
+      ...current,
+      [playerId]: current[playerId] + 1,
+    }));
+    setWordPoints((current) => ({
+      ...current,
+      [playerId]: nextWordPoints,
+    }));
+    setCorrectStreaks((current) => ({
+      ...current,
+      [playerId]: nextStreak,
+    }));
+
+    if (nextStreak % 3 === 0) {
+      const player = BUZZ_WORT_PLAYERS.find(
+        (candidate) => candidate.id === playerId,
+      );
+      pushHistory({
+        tone: "bonus",
+        text: `Combo x${nextStreak} · ${player?.name ?? "Joueur"}`,
+      });
+    }
+
+    return {
+      isCombo: nextStreak % 3 === 0,
+      nextStreak,
+      nextWordPoints,
+    };
+  };
+
   const handleBuzz = (playerId: string) => {
-    if (phase !== "buzz" || buzzedPlayerIds.includes(playerId)) return;
+    const isBonusSteal = phase === "bonus-buzz";
+    const lockedPlayers = isBonusSteal
+      ? bonusLockedPlayerIds
+      : buzzedPlayerIds;
+    const isTieBreakEligible =
+      tieBreakPlayerIds.length === 0 || tieBreakPlayerIds.includes(playerId);
+
+    if (
+      (phase !== "buzz" && !isBonusSteal) ||
+      lockedPlayers.includes(playerId) ||
+      !isTieBreakEligible
+    ) {
+      return;
+    }
 
     const player = BUZZ_WORT_PLAYERS.find(
       (candidate) => candidate.id === playerId,
@@ -399,25 +649,38 @@ export function BuzzWortScreen() {
 
     pushHistory({
       tone: "buzz",
-      text: `${player?.name ?? "Un joueur"} a buzzé`,
+      text: isBonusSteal
+        ? `${player?.name ?? "Un joueur"} tente de voler le bonus`
+        : `${player?.name ?? "Un joueur"} a buzzé`,
     });
 
     setCenterMoment({
-      tone: "buzz",
+      tone: isBonusSteal ? "steal" : "buzz",
       playerId,
-      label: `${player?.name ?? "JOUEUR"} A BUZZÉ`,
-      value: question.word,
+      label: isBonusSteal
+        ? "MAIN VOLÉE"
+        : `${player?.name ?? "JOUEUR"} A BUZZÉ`,
+      value: isBonusSteal ? player?.name ?? "JOUEUR" : question.word,
       detail:
         playerId === localPlayer.id ? "À toi de répondre" : "Réponse en cours…",
     });
-    playCenterVfx("buzz", playerId);
+    playCenterVfx(isBonusSteal ? "steal" : "buzz", playerId);
 
     setActivePlayerId(playerId);
-    setPlayerTime(15);
+    setPlayerTime(
+      isBonusSteal
+        ? BUZZ_WORT_STEAL_SECONDS
+        : BUZZ_WORT_TRANSLATION_SECONDS,
+    );
+    setActiveAnswerLimit(
+      isBonusSteal
+        ? BUZZ_WORT_STEAL_SECONDS
+        : BUZZ_WORT_TRANSLATION_SECONDS,
+    );
     setSelectedChoice(null);
     setTypedAnswer("");
     setFeedback(null);
-    setPhase("translation");
+    setPhase(isBonusSteal ? "bonus" : "translation");
   };
 
   const failCurrentBuzz = (message: string) => {
@@ -436,18 +699,34 @@ export function BuzzWortScreen() {
       text: `${failedPlayer?.name ?? "Le joueur"} · ${message}`,
     });
 
+    setCorrectStreaks((current) => ({
+      ...current,
+      [activePlayerId]: 0,
+    }));
     setBuzzedPlayerIds(updatedBuzzedPlayers);
     setActivePlayerId(null);
     setSelectedChoice(null);
     setTypedAnswer("");
     setFeedback(message);
 
-    if (updatedBuzzedPlayers.length === BUZZ_WORT_PLAYERS.length) {
+    if (
+      getEligibleBuzzWortPlayers(
+        PLAYER_IDS,
+        updatedBuzzedPlayers,
+        tieBreakPlayerIds.length > 0 ? tieBreakPlayerIds : undefined,
+      ).length === 0
+    ) {
       pushHistory({
         tone: "neutral",
         text: `Réponse : ${question.translation}`,
       });
-      setPhase("reveal");
+      finishCurrentWord({
+        tone: "danger",
+        playerId: null,
+        label: "PERSONNE NE TROUVE",
+        value: question.translation,
+        detail: question.word,
+      });
     } else {
       setPhase("buzz");
     }
@@ -475,6 +754,30 @@ export function BuzzWortScreen() {
     if (isCorrect) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+      const pointResult = registerCorrectAnswer(activePlayerId);
+
+      if (tieBreakPlayerIds.length > 0) {
+        setWinnerPlayerId(activePlayerId);
+        setActivePlayerId(null);
+        setCenterMoment({
+          tone: "success",
+          playerId: activePlayerId,
+          label: "MORT SUBITE",
+          value: `${answeringPlayer?.name ?? "Joueur"} gagne !`,
+          detail: `${question.word} = ${question.translation}`,
+        });
+        playCenterVfx(
+          pointResult.isCombo ? "combo" : "success",
+          activePlayerId,
+        );
+        pushHistory({
+          tone: "success",
+          text: `${answeringPlayer?.name ?? "Joueur"} remporte la partie`,
+        });
+        setPhase("finished");
+        return;
+      }
+
       setCenterMoment({
         tone: "success",
         playerId: activePlayerId,
@@ -482,12 +785,10 @@ export function BuzzWortScreen() {
         value: finalAnswer,
         detail: `${question.word} = ${question.translation}`,
       });
-      playCenterVfx("success", activePlayerId);
-
-      setScores((current) => ({
-        ...current,
-        [activePlayerId]: current[activePlayerId] + 1,
-      }));
+      playCenterVfx(
+        pointResult.isCombo ? "combo" : "success",
+        activePlayerId,
+      );
 
       pushHistory({
         tone: "success",
@@ -497,7 +798,9 @@ export function BuzzWortScreen() {
       setSelectedChoice(null);
       setTypedAnswer("");
       setBonusIndex(0);
-      setPlayerTime(15);
+      setBonusLockedPlayerIds([]);
+      setPlayerTime(BUZZ_WORT_BONUS_SECONDS);
+      setActiveAnswerLimit(BUZZ_WORT_BONUS_SECONDS);
       setFeedback("Bonne traduction · +1 pt");
       setPhase("bonus");
       return;
@@ -530,40 +833,27 @@ export function BuzzWortScreen() {
     });
 
     if (selectedChoice !== bonus.correctAnswer) {
-      pushHistory({
-        tone: "danger",
-        text: `Bonus raté · réponse : ${bonus.correctAnswer}`,
-      });
-
-      setCenterMoment({
-        tone: "danger",
-        playerId: activePlayerId,
-        label: "BONUS RATÉ",
-        value: selectedChoice,
-        detail: `Réponse : ${bonus.correctAnswer}`,
-      });
-      playCenterVfx("danger", activePlayerId);
-
-      setFeedback(`Réponse : ${bonus.correctAnswer}`);
-      setPhase("reveal");
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      openBonusSteal(activePlayerId, "bonus raté");
       return;
     }
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+    const pointResult = registerCorrectAnswer(activePlayerId);
+    const masteredWord = pointResult.nextWordPoints === 3;
+
     setCenterMoment({
       tone: "bonus",
       playerId: activePlayerId,
-      label: "BONUS RÉUSSI",
+      label: masteredWord ? "MAÎTRISE PARFAITE" : "BONUS RÉUSSI",
       value: selectedChoice,
-      detail: "+1 pt",
+      detail: masteredWord ? "3/3 · badge gagné" : "+1 pt",
     });
-    playCenterVfx("bonus", activePlayerId);
-
-    setScores((current) => ({
-      ...current,
-      [activePlayerId]: current[activePlayerId] + 1,
-    }));
+    playCenterVfx(
+      pointResult.isCombo ? "combo" : "bonus",
+      activePlayerId,
+    );
 
     pushHistory({
       tone: "success",
@@ -572,17 +862,32 @@ export function BuzzWortScreen() {
 
     if (bonusIndex < question.bonuses.length - 1) {
       setBonusIndex((value) => value + 1);
+      setBonusLockedPlayerIds([]);
       setSelectedChoice(null);
-      setPlayerTime(15);
+      setPlayerTime(BUZZ_WORT_BONUS_SECONDS);
+      setActiveAnswerLimit(BUZZ_WORT_BONUS_SECONDS);
       setFeedback("Bonus réussi · +1 pt");
     } else {
+      if (masteredWord) {
+        setMasteryCounts((current) => ({
+          ...current,
+          [activePlayerId]: current[activePlayerId] + 1,
+        }));
+        pushHistory({
+          tone: "bonus",
+          text: `🏆 Maîtrise parfaite · ${answeringPlayer?.name ?? "Joueur"}`,
+        });
+      }
+
       setSelectedChoice(null);
       setFeedback("Mot maîtrisé · +3 maximum");
-      pushHistory({
-        tone: "success",
-        text: `${answeringPlayer?.name ?? "Le joueur"} maîtrise le mot`,
+      finishCurrentWord({
+        tone: "bonus",
+        playerId: activePlayerId,
+        label: masteredWord ? "MAÎTRISE PARFAITE" : "MOT TERMINÉ",
+        value: question.translation,
+        detail: question.word,
       });
-      setPhase("reveal");
     }
   };
 
@@ -632,8 +937,49 @@ export function BuzzWortScreen() {
       }).start(({ finished }) => {
         if (!finished) return;
 
-        resetQuestion(nextQuestionIndex);
         questionTransitionAnim.setValue(0);
+
+        if (tieBreakPlayerIds.length > 0) {
+          resetQuestion(nextQuestionIndex);
+        } else {
+          const completedWords = wordsPlayed + 1;
+          setWordsPlayed(completedWords);
+
+          if (completedWords >= BUZZ_WORT_MATCH_WORDS) {
+            const leaders = getBuzzWortLeaders(scores);
+
+            if (leaders.length === 1) {
+              const winnerId = leaders[0];
+              const winner = BUZZ_WORT_PLAYERS.find(
+                (player) => player.id === winnerId,
+              );
+              setWinnerPlayerId(winnerId);
+              playCenterVfx("success", winnerId);
+              setCenterMoment({
+                tone: "success",
+                playerId: winnerId,
+                label: "VICTOIRE",
+                value: winner?.name ?? "Gagnant",
+                detail: `${scores[winnerId]} points`,
+              });
+              pushHistory({
+                tone: "success",
+                text: `🏆 ${winner?.name ?? "Le joueur"} remporte la partie`,
+              });
+              setPhase("finished");
+            } else {
+              setTieBreakPlayerIds(leaders);
+              pushHistory({
+                tone: "bonus",
+                text: "Égalité · mort subite entre les leaders",
+              });
+              resetQuestion(nextQuestionIndex);
+            }
+          } else {
+            resetQuestion(nextQuestionIndex);
+          }
+        }
+
         Animated.spring(questionTransitionAnim, {
           toValue: 1,
           friction: 8,
@@ -648,8 +994,13 @@ export function BuzzWortScreen() {
     nextQuestionIndex,
     nextWordCountdown,
     phase,
+    playCenterVfx,
+    pushHistory,
     questionTransitionAnim,
     resetQuestion,
+    scores,
+    tieBreakPlayerIds,
+    wordsPlayed,
   ]);
 
   const floatY = floatAnim.interpolate({
@@ -701,11 +1052,22 @@ export function BuzzWortScreen() {
   );
 
   const centerStepCount = question.bonuses.length + 1;
+  const matchProgressLabel =
+    tieBreakPlayerIds.length > 0
+      ? "Mort subite"
+      : `Mot ${Math.min(wordsPlayed + 1, BUZZ_WORT_MATCH_WORDS)}/${BUZZ_WORT_MATCH_WORDS}`;
   let centerStepIndex = 0;
   let centerLabel = "TRADUCTION";
   let centerQuestion = `Que signifie « ${question.word} » ?`;
   let centerAnswer = CENTER_ANSWER_PLACEHOLDER;
-  let centerDetail = "En attente d'un buzz";
+  let centerDetail =
+    tieBreakPlayerIds.length > 0
+      ? "Mort subite · leaders uniquement"
+      : `${matchProgressLabel} · en attente d'un buzz`;
+
+  if (tieBreakPlayerIds.length > 0 && phase === "buzz") {
+    centerLabel = "MORT SUBITE";
+  }
 
   if (phase === "translation" && activePlayerId) {
     const liveAnswer = isLocalTurn ? typedAnswer.trim() : "";
@@ -713,8 +1075,16 @@ export function BuzzWortScreen() {
     centerLabel = `${activePlayer?.name ?? "JOUEUR"} RÉPOND`;
     centerAnswer = liveAnswer || CENTER_ANSWER_PLACEHOLDER;
     centerDetail = liveAnswer
-      ? "Réponse en cours"
-      : "15 secondes pour répondre";
+      ? `${matchProgressLabel} · réponse en cours`
+      : `${matchProgressLabel} · ${activeAnswerLimit}s pour répondre`;
+  } else if (phase === "bonus-buzz") {
+    const bonus = question.bonuses[bonusIndex];
+
+    centerStepIndex = bonusIndex + 1;
+    centerLabel = "VOL OUVERT";
+    centerQuestion = bonus.label;
+    centerAnswer = "BUZZEZ !";
+    centerDetail = `${matchProgressLabel} · vol pendant ${bonusBuzzTime}s`;
   } else if (phase === "bonus" && activePlayerId) {
     const bonus = question.bonuses[bonusIndex];
 
@@ -722,13 +1092,30 @@ export function BuzzWortScreen() {
     centerLabel = `${activePlayer?.name ?? "JOUEUR"} · BONUS`;
     centerQuestion = bonus.label;
     centerAnswer = selectedChoice || CENTER_ANSWER_PLACEHOLDER;
-    centerDetail = selectedChoice ? "Réponse sélectionnée" : "Choix en attente";
+    centerDetail = selectedChoice
+      ? `${matchProgressLabel} · réponse sélectionnée`
+      : `${matchProgressLabel} · choix en attente`;
   } else if (phase === "reveal") {
     centerStepIndex = centerStepCount;
     centerLabel = centerMoment?.label ?? "RÉPONSE";
     centerQuestion = `${question.word} = ${question.translation}`;
-    centerAnswer = `PROCHAIN · ${nextWordCountdown}S`;
+    centerAnswer = `${
+      wordsPlayed + 1 >= BUZZ_WORT_MATCH_WORDS &&
+      tieBreakPlayerIds.length === 0
+        ? "RÉSULTATS"
+        : "PROCHAIN"
+    } · ${nextWordCountdown}S`;
     centerDetail = "Préparez-vous";
+  } else if (phase === "finished") {
+    const winner = BUZZ_WORT_PLAYERS.find(
+      (player) => player.id === winnerPlayerId,
+    );
+
+    centerStepIndex = centerStepCount;
+    centerLabel = "VICTOIRE";
+    centerQuestion = `${winner?.name ?? "Gagnant"} remporte la partie`;
+    centerAnswer = `${winnerPlayerId ? scores[winnerPlayerId] : 0} PTS`;
+    centerDetail = "Partie terminée";
   }
 
   const centerRemainingSteps = Math.max(
@@ -739,29 +1126,55 @@ export function BuzzWortScreen() {
   const centerVfxColor =
     centerVfxKind === "danger"
       ? "#FB7185"
-      : centerVfxKind === "success" || centerVfxKind === "bonus"
+      : centerVfxKind === "success" ||
+          centerVfxKind === "bonus" ||
+          centerVfxKind === "combo"
         ? "#FACC15"
         : getPlayerAccent(centerVfxPlayerId);
   const centerVfxText =
     centerVfxKind === "success" || centerVfxKind === "bonus"
       ? "+1"
+      : centerVfxKind === "combo"
+        ? "x3"
+        : centerVfxKind === "steal"
+          ? "VOL!"
       : centerVfxKind === "danger"
         ? "×"
         : "BUZZ!";
+
+  const canPlayerBuzz = (playerId: string) => {
+    if (phase === "bonus-buzz") {
+      return !bonusLockedPlayerIds.includes(playerId);
+    }
+
+    if (phase !== "buzz" || buzzedPlayerIds.includes(playerId)) {
+      return false;
+    }
+
+    return (
+      tieBreakPlayerIds.length === 0 || tieBreakPlayerIds.includes(playerId)
+    );
+  };
 
   const renderSeat = (
     player: (typeof BUZZ_WORT_PLAYERS)[number],
     index: number,
     position: "top" | "left" | "right" | "bottom",
   ) => {
-    const locked = buzzedPlayerIds.includes(player.id);
-    const active = activePlayerId === player.id && phase !== "reveal";
+    const locked =
+      phase === "bonus-buzz" || phase === "bonus"
+        ? bonusLockedPlayerIds.includes(player.id)
+        : buzzedPlayerIds.includes(player.id);
+    const active =
+      activePlayerId === player.id &&
+      phase !== "reveal" &&
+      phase !== "finished";
     const local = index === 3;
     const failed = locked && !active;
     const lateral = position === "left" || position === "right";
     const playerTimeProgress = `${Math.max(
       0,
-      Math.min(100, (playerTime / 15) * 100),
+      Math.min(100, (playerTime / activeAnswerLimit) * 100),
     )}%` as `${number}%`;
 
     return (
@@ -770,7 +1183,7 @@ export function BuzzWortScreen() {
         accessibilityRole="button"
         accessibilityLabel={`Buzzer de ${player.name}`}
         onPress={() => handleBuzz(player.id)}
-        disabled={phase !== "buzz" || locked}
+        disabled={!canPlayerBuzz(player.id)}
         className={[
           "items-center justify-center",
           position === "left" && "max-w-[86px]",
@@ -787,7 +1200,7 @@ export function BuzzWortScreen() {
                 pointerEvents="none"
                 className="absolute w-[68px] h-[68px] rounded-full"
                 style={{
-                  backgroundColor: local ? C.cyan : player.color,
+                  backgroundColor: getPlayerAccent(player.id),
                   opacity: activeGlow,
                   transform: [{ scale: 1.03 }],
                 }}
@@ -912,6 +1325,14 @@ export function BuzzWortScreen() {
                   {local ? " pts " : ""}
                 </Text>
               </View>
+
+              {masteryCounts[player.id] > 0 ? (
+                <View className="rounded-full border border-[#FACC15]/40 bg-[#FACC15]/15 px-[5px] py-[2px]">
+                  <Text className="text-[8px] font-[900] text-[#FDE68A]">
+                    🏆 {masteryCounts[player.id]}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           )}
 
@@ -1005,6 +1426,42 @@ export function BuzzWortScreen() {
   };
 
   const renderInteractionDock = () => {
+    if (phase === "finished") {
+      const winner = BUZZ_WORT_PLAYERS.find(
+        (player) => player.id === winnerPlayerId,
+      );
+
+      return (
+        <View className="absolute left-[20px] right-[20px] bottom-[108px] z-[70] rounded-[22px] border border-[#FACC15]/30 bg-[rgba(12,16,39,0.97)] p-[12px] [elevation:18]">
+          <Text className="text-center text-[10px] font-[900] tracking-[1.2px] text-[#FACC15]">
+            🏆 PARTIE TERMINÉE
+          </Text>
+          <Text className="mt-[3px] text-center text-[15px] font-[900] text-white">
+            {winner?.name ?? "Le gagnant"} · {winnerPlayerId ? scores[winnerPlayerId] : 0} pts
+          </Text>
+
+          <View className="mt-[10px] flex-row gap-[8px]">
+            <Pressable
+              onPress={() => router.back()}
+              className="h-[38px] flex-1 items-center justify-center rounded-[12px] border border-white/15 bg-white/[0.06] active:scale-[0.98]"
+            >
+              <Text className="text-[10px] font-[900] text-white/80">
+                QUITTER
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={restartMatch}
+              className="h-[38px] flex-1 items-center justify-center rounded-[12px] bg-[#FACC15] active:scale-[0.98]"
+            >
+              <Text className="text-[10px] font-[900] text-[#111827]">
+                REJOUER
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      );
+    }
+
     if (phase === "translation" && isLocalTurn) {
       return (
         <KeyboardAvoidingView
@@ -1028,7 +1485,10 @@ export function BuzzWortScreen() {
                   style={{
                     width: `${Math.max(
                       0,
-                      Math.min(100, (playerTime / 15) * 100),
+                      Math.min(
+                        100,
+                        (playerTime / activeAnswerLimit) * 100,
+                      ),
                     )}%`,
                   }}
                 />
@@ -1116,7 +1576,7 @@ export function BuzzWortScreen() {
                 style={{
                   width: `${Math.max(
                     0,
-                    Math.min(100, (playerTime / 15) * 100),
+                    Math.min(100, (playerTime / activeAnswerLimit) * 100),
                   )}%`,
                 }}
               />
@@ -1260,10 +1720,7 @@ export function BuzzWortScreen() {
               size={80}
               variant="red"
               onPress={() => handleBuzz(BUZZ_WORT_PLAYERS[0].id)}
-              disabled={
-                phase !== "buzz" ||
-                buzzedPlayerIds.includes(BUZZ_WORT_PLAYERS[0].id)
-              }
+              disabled={!canPlayerBuzz(BUZZ_WORT_PLAYERS[0].id)}
             />
           </View>
         </View>
@@ -1287,10 +1744,7 @@ export function BuzzWortScreen() {
               size={80}
               variant="amber"
               onPress={() => handleBuzz(BUZZ_WORT_PLAYERS[1].id)}
-              disabled={
-                phase !== "buzz" ||
-                buzzedPlayerIds.includes(BUZZ_WORT_PLAYERS[1].id)
-              }
+              disabled={!canPlayerBuzz(BUZZ_WORT_PLAYERS[1].id)}
             />
           </View>
 
@@ -1298,14 +1752,22 @@ export function BuzzWortScreen() {
         </View>
 
         <View className="w-[190px] items-center justify-center relative">
-          {phase === "buzz" ? (
+          {phase === "buzz" || phase === "bonus-buzz" ? (
             <View className="absolute top-[-40px] w-[132px] h-[4px] rounded-full bg-white/10 overflow-hidden z-[20]">
               <View
-                className="h-full rounded-full bg-[#FFB703]"
+                className={[
+                  "h-full rounded-full",
+                  phase === "bonus-buzz" ? "bg-[#8B5CF6]" : "bg-[#FFB703]",
+                ].join(" ")}
                 style={{
                   width: `${Math.max(
                     0,
-                    Math.min(100, (generalTime / 60) * 100),
+                    Math.min(
+                      100,
+                      phase === "bonus-buzz"
+                        ? (bonusBuzzTime / BUZZ_WORT_STEAL_SECONDS) * 100
+                        : (generalTime / 60) * 100,
+                    ),
                   )}%`,
                 }}
               />
@@ -1516,10 +1978,7 @@ export function BuzzWortScreen() {
               size={80}
               variant="violet"
               onPress={() => handleBuzz(BUZZ_WORT_PLAYERS[2].id)}
-              disabled={
-                phase !== "buzz" ||
-                buzzedPlayerIds.includes(BUZZ_WORT_PLAYERS[2].id)
-              }
+              disabled={!canPlayerBuzz(BUZZ_WORT_PLAYERS[2].id)}
             />
           </View>
 
@@ -1591,6 +2050,10 @@ export function BuzzWortScreen() {
                 <Text className="mt-[-2px] text-[6px] font-[900] tracking-[1px] text-white/75">
                   {centerVfxKind === "buzz"
                     ? "RÉPONDS !"
+                    : centerVfxKind === "steal"
+                      ? "MAIN VOLÉE"
+                      : centerVfxKind === "combo"
+                        ? "COMBO"
                     : centerVfxKind === "danger"
                       ? "RATÉ"
                       : "POINT"}
@@ -1649,9 +2112,7 @@ export function BuzzWortScreen() {
               size={80}
               variant="cyan"
               onPress={() => handleBuzz(localPlayer.id)}
-              disabled={
-                phase !== "buzz" || buzzedPlayerIds.includes(localPlayer.id)
-              }
+              disabled={!canPlayerBuzz(localPlayer.id)}
             />
           </View>
         </View>
